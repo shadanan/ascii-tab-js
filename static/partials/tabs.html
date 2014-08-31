@@ -1,0 +1,18 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-2">
+      <!--Sidebar content-->
+
+      Search: <input ng-model="query">
+    </div>
+    <div class="col-md-10">
+      <!--Body content-->
+
+      <ul class="tabs">
+        <li ng-repeat="tab in tabs | filter:query">
+          <a href="#/tab/{{tab.name}}">{{tab.name}}</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

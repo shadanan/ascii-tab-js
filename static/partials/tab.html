@@ -1,0 +1,8 @@
+<div class="column">
+  <div class="verse" ng-repeat="verse in verses">
+    <div class="line" ng-repeat="line in verse.data">
+      <div class="gutter">{{line.id}}</div>
+      <div class="content" ng-bind-html="renderHtml(line.data)"></div>
+    </div>
+  </div>
+</div>
