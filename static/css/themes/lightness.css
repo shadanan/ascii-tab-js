@@ -1,0 +1,26 @@
+/* app css stylesheet */
+
+.line .gutter {
+  color: #6d6d6d;
+  background-color: #fafafa;
+  border-right: thin solid #a0a0a0;
+}
+
+.line .content .chord {
+  color: #0068b4;
+}
+
+.controls {
+  border-left: thin solid #a0a0a0;
+  border-bottom: thin solid #a0a0a0;
+  border-bottom-left-radius: 0.25em;
+  background-color: #fafafa;
+}
+
+.controls .group {
+  border-bottom: thin solid #a0a0a0;
+}
+
+.controls .group:last-child {
+  border-bottom: none;
+}

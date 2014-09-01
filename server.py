@@ -1,8 +1,10 @@
 #!/usr/bin/env python2.7
 '''Returns static files'''
+import os
 import glob
 import json
 import argparse
+import subprocess
 
 from flask import Flask, send_from_directory
 app = Flask(__name__)
@@ -13,15 +15,22 @@ def index():
     return send_from_directory('static', 'index.html')
 
 @app.route('/tab/')
-def tabs():
+def list_tabs():
     '''return a json list of tabs'''
-    tab_list = glob.glob1(app.config['TABPATH'], '*.txt')
-    return json.dumps([{'name': x[:-4]} for x in tab_list])
+    tabs = glob.glob1(app.config['TABPATH'], '*.txt')
+    return json.dumps([{'name': x[:-4]} for x in tabs])
 
 @app.route('/tab/<string:filename>/')
-def tab(filename):
+def show_tab(filename):
     '''return static files'''
     return send_from_directory(app.config['TABPATH'], filename + '.txt')
+
+@app.route('/tab/<string:filename>/edit')
+def edit_tab(filename):
+    '''return static files'''
+    result = subprocess.call([app.config['EDITOR'],
+        os.path.join(app.config['TABPATH'], filename + '.txt')])
+    return json.dumps({'status': result})
 
 def main():
     '''launch AsciiTabJS server'''
@@ -32,10 +41,15 @@ def main():
                         help='run server in debug mode')
     parser.add_argument('--tabpath', default='.',
                         help='path from which to serve tabs')
+    parser.add_argument('--editor', default='subl',
+                        help='editor to use for editing tabs')
     args = parser.parse_args()
 
     app.config['TABPATH'] = args.tabpath
-    app.run(port=args.port, debug=args.debug)
+    app.config['EDITOR'] = args.editor
+
+    subprocess.call(['open', 'http://localhost:%d/' % args.port])
+    app.run(host='0.0.0.0', port=args.port, debug=args.debug)
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,126 @@
+/* app css stylesheet */
+
+body {
+  padding: 0;
+  margin: 0;
+  font-family: "Menlo", monospace;
+}
+
+.fa {
+  cursor: pointer;
+}
+
+.controls {
+  float: right;
+  text-align: left;
+  position: absolute;
+  right: 0;
+
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  opacity: 0.1;
+  -webkit-transition: opacity 0.1s ease-in-out;
+  -moz-transition: opacity 0.1s ease-in-out;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.controls:hover, .controls:active {
+  opacity: 0.9;
+}
+
+.controls .group {
+  font-size: 16px;
+  padding: 0.25em 0.5em;
+}
+
+.controls .group .label {
+  font-size: 0.7em;
+  padding-bottom: 0.3em;
+}
+
+.column1 {
+  -webkit-column-count: 1;
+  -moz-column-count: 1;
+  column-count: 1;
+}
+
+.column2 {
+  -webkit-column-count: 2;
+  -moz-column-count: 2;
+  column-count: 2;
+}
+
+.column3 {
+  -webkit-column-count: 3;
+  -moz-column-count: 3;
+  column-count: 3;
+}
+
+.column4 {
+  -webkit-column-count: 4;
+  -moz-column-count: 4;
+  column-count: 4;
+}
+
+.column5 {
+  -webkit-column-count: 5;
+  -moz-column-count: 5;
+  column-count: 5;
+}
+
+.verse {
+  clear: both;
+  float: left;
+
+  -webkit-column-break-inside: avoid;
+  -moz-column-break-inside: avoid;
+  column-break-inside: avoid;
+}
+
+.line {
+  clear: both;
+}
+
+.line:last-child .gutter {
+  padding: 0 0.5em 1em 0;
+}
+
+.verse:last-child .line:last-child .gutter {
+  padding: 0 0.5em 0 0;
+}
+
+.line .gutter {
+  float: left;
+  width: 2.5em;
+  padding: 0 0.5em 0 0;
+  margin: 0 0.5em 0 0;
+  text-align: right;
+  white-space: pre;
+}
+
+.line .content {
+  float: left;
+}
+
+.line .content .data {
+  white-space: pre;
+}
+
+.line .content .spacer {
+  float: left;
+  white-space: pre;
+}
+
+.line .content .lyric {
+  float: left;
+  white-space: pre;
+}
+
+.line .content .chord {
+
+}

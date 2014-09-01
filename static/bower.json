@@ -1,14 +1,17 @@
 {
-  "name": "ascii-tab-js",
+  "name": "AsciiTabJS",
   "description": "Auto formats ascii guitar tabs",
   "version": "0.1",
   "homepage": "http://shad.io/AsciiTabJS",
   "license": "MIT",
+  "private": true,
   "dependencies": {
     "angular": "1.2.x",
     "angular-mocks": "~1.2.x",
     "angular-route": "~1.2.x",
     "angular-resource": "~1.2.x",
-    "angular-animate": "~1.2.x"
+    "angular-animate": "~1.2.x",
+    "font-awesome": "4.2.0",
+    "jquery": "2.1.1"
   }
 }

@@ -1,7 +1,29 @@
-<div class="column">
+<div class="controls">
+  <div class="group">
+    <div class="label">Tools</div>
+    <i class="fa fa-pencil" ng-click="openEditor()" title="Edit '{{tabName}}' in default editor"></i>
+  </div>
+  <div class="group">
+    <div class="label">Transpose: {{transposeString()}}</div>
+    <i class="fa fa-arrow-circle-up" ng-click="transposeUp()"></i>
+    <i class="fa fa-arrow-circle-down" ng-click="transposeDown()"></i>
+    <i class="fa fa-history" ng-if="transpose" ng-click="transposeReset()"></i>
+  </div>
+  <div class="group">
+    <div class="label">Columns: {{columns}}</div>
+    <i class="fa fa-plus-circle" ng-click="columnsUp()"></i>
+    <i class="fa fa-minus-circle" ng-click="columnsDown()"></i>
+  </div>
+  <div class="group">
+    <div class="label">Font Size: {{fontSizeString()}}</div>
+    <i class="fa fa-plus-circle" ng-click="fontSizeUp()"></i>
+    <i class="fa fa-minus-circle" ng-click="fontSizeDown()"></i>
+  </div>
+</div>
+
+<div ng-class="'column' + columns">
   <div class="verse" ng-repeat="verse in verses">
     <div class="line" ng-repeat="line in verse.data">
-      <div class="gutter">{{line.id}}</div>
       <div class="content" ng-bind-html="renderHtml(line.data)"></div>
     </div>
   </div>
