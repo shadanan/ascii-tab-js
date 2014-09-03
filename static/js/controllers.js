@@ -90,15 +90,13 @@ function transposeChordName(chordName, transpose) {
 function transposeChord(chord, transpose) {
   var transposedChord = [];
 
-  var match = parseChord(chord);
-
-  var chordName = match.slice(1, 3).join('');
+  var chordName = chord.slice(0, 2).join('');
   transposedChord.push(transposeChordName(chordName, transpose));
 
-  transposedChord.push(match[3]);
+  transposedChord.push(chord[2]);
 
-  if (match[4] == '/') {
-    var bassChordName = match.slice(-2).join('');
+  if (chord[3] == '/') {
+    var bassChordName = chord.slice(4, 6).join('');
     transposedChord.push('/');
     transposedChord.push(transposeChordName(bassChordName, transpose));
   }
@@ -113,12 +111,18 @@ function annotateChords(line, transpose) {
   var tokens = line.split(/ /);
 
   for (var i = 0; i < tokens.length; i++) {
-    if (tokens[i][0] == '[' && parseChord(tokens[i].slice(1))) {
-      result.push("[<span class='chord'>" + transposeChord(tokens[i].slice(1), transpose) + "</span>");
-    } else if (tokens[i].slice(-1) == ']' && parseChord(tokens[i].slice(0, -1), transpose)) {
-      result.push("<span class='chord'>" + transposeChord(tokens[i].slice(0, -1)) + "</span>]");
-    } else if (parseChord(tokens[i])) {
-      result.push("<span class='chord'>" + transposeChord(tokens[i], transpose) + "</span>");
+    var start = /^([\[\(]*)/;
+    var end = /([\)\],]*)$/;
+
+    var parsedChord = tokens[i].match(RegExp(start.source + chords.source + end.source));
+    if (parsedChord) {
+      result.push([
+          parsedChord[1],
+          "<span class='chord'>",
+          transposeChord(parsedChord.slice(2, -1), transpose),
+          "</span>",
+          parsedChord.slice(-1)
+        ].join(''));
     } else {
       result.push(tokens[i]);
     }
