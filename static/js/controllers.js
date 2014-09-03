@@ -229,14 +229,8 @@ asciiTabControllers.controller('tabListCtrl', ['$scope', '$http',
 ]);
 
 asciiTabControllers.controller('tabCtrl', [
-  '$rootScope', '$scope', '$http', '$routeParams', '$sce',
-  function($rootScope, $scope, $http, $routeParams, $sce) {
-    $rootScope.title = $routeParams.tabName + ' - AsciiTabJS';
-    $scope.tabName = $routeParams.tabName;
-    $scope.columns = $routeParams.columns;
-    $scope.transpose = $routeParams.transpose;
-    $scope.fontSize = 100;
-
+  '$rootScope', '$scope', '$document', '$http', '$routeParams', '$sce',
+  function($rootScope, $scope, $document, $http, $routeParams, $sce) {
     $scope.renderHtml = function(html_code) {
       return $sce.trustAsHtml(html_code);
     };
@@ -281,13 +275,18 @@ asciiTabControllers.controller('tabCtrl', [
       }
     }
 
+    $scope.fontSizeReset = function() {
+      $scope.fontSize = 100;
+      $('body').css('font-size', $scope.fontSize/100 + "em");
+    }
+
     $scope.fontSizeUp = function() {
       if ($scope.fontSize >= 200) {
         return;
       }
 
       $scope.fontSize += 5;
-      $('body').css('font-size', $scope.fontSize/100. + "em");
+      $('body').css('font-size', $scope.fontSize/100 + "em");
     }
 
     $scope.fontSizeDown = function() {
@@ -296,7 +295,7 @@ asciiTabControllers.controller('tabCtrl', [
       }
 
       $scope.fontSize -= 5;
-      $('body').css('font-size', $scope.fontSize/100. + "em");
+      $('body').css('font-size', $scope.fontSize/100 + "em");
     }
 
     $scope.fontSizeString = function() {
@@ -306,6 +305,37 @@ asciiTabControllers.controller('tabCtrl', [
     $scope.openEditor = function() {
       $http.get('/tab/' + $scope.tabName + '/edit');
     };
+
+    $document.bind('keydown', function(e) {
+      console.log(e);
+
+      if (!e.metaKey && !e.altKey && !e.shiftKey && !e.ctrlKey) {
+        if (e.keyCode >= 49 && e.keyCode <= 53) {
+          $scope.columns = e.keyCode - 48;
+          e.preventDefault();
+        } else if (e.keyCode == 187) {
+          $scope.fontSizeUp();
+          e.preventDefault();
+        } else if (e.keyCode == 189) {
+          $scope.fontSizeDown();
+          e.preventDefault();
+        } else if (e.keyCode == 38) {
+          $scope.transposeUp();
+          e.preventDefault();
+        } else if (e.keyCode == 40) {
+          $scope.transposeDown();
+          e.preventDefault();
+        }
+      }
+
+      $scope.$apply();
+    });
+
+    $rootScope.title = $routeParams.tabName + ' - AsciiTabJS';
+    $scope.tabName = $routeParams.tabName;
+    $scope.columns = 1;
+    $scope.transpose = 0;
+    $scope.fontSizeReset();
 
     $http.get('/tab/' + $scope.tabName).success(function(tabData) {
       $scope.tabData = tabData;

@@ -16,12 +16,9 @@ asciiTabApp.config(['$routeProvider',
         templateUrl: '/static/partials/tabs.html',
         controller: 'tabListCtrl'
       }).
-      when('/tab/:tabName/:columns/:transpose', {
+      when('/tab/:tabName', {
         templateUrl: '/static/partials/tab.html',
         controller: 'tabCtrl'
-      }).
-      when('/tab/:tabName', {
-        redirectTo: '/tab/:tabName/2/0'
       }).
       otherwise({
         redirectTo: '/tab/'
