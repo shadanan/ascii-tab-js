@@ -11,10 +11,9 @@ body {
 }
 
 .controls {
-  float: right;
-  text-align: left;
   position: absolute;
   right: 0;
+  top: 0;
 
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -29,18 +28,54 @@ body {
   transition: opacity 0.1s ease-in-out;
 }
 
-.controls:hover, .controls:active {
-  opacity: 0.9;
+.controls:hover, .controls:active, .visible {
+  opacity: 0.95;
 }
 
-.controls .group {
-  font-size: 16px;
+.control-panel {
+  float: right;
+  text-align: left;
+  right: 0;
+}
+
+.control-panel .group {
   padding: 0.25em 0.5em;
 }
 
-.controls .group .label {
+.control-panel .group .label {
   font-size: 0.7em;
   padding-bottom: 0.3em;
+}
+
+.search-panel {
+  padding-bottom: 1em;
+  font-size: 0.8em;
+  float: right;
+  width: 40em;
+}
+
+.search-panel .quit-button {
+  float: right;
+  padding: 0.25em 0.5em;
+}
+
+.search-panel .search-box {
+  padding: 1em;
+}
+
+.search-panel .search-box input {
+  font-size: 1.2em;
+  width: 92%;
+}
+
+.search-panel .tab-list {
+  height: 40em;
+  overflow-y: scroll;
+}
+
+.search-panel .tab-list ul {
+  list-style: none;
+  padding-left: 1em;
 }
 
 .column1 {

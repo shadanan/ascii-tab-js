@@ -234,7 +234,9 @@ asciiTabControllers.controller('tabListCtrl', ['$scope', '$http',
 
 asciiTabControllers.controller('tabCtrl', [
   '$rootScope', '$scope', '$document', '$http', '$routeParams', '$sce',
-  function($rootScope, $scope, $document, $http, $routeParams, $sce) {
+  '$location', 'filterFilter',
+  function($rootScope, $scope, $document, $http, $routeParams, $sce,
+    $location, filterFilter) {
     $scope.renderHtml = function(html_code) {
       return $sce.trustAsHtml(html_code);
     };
@@ -247,17 +249,17 @@ asciiTabControllers.controller('tabCtrl', [
       } else {
         return $scope.transpose;
       }
-    }
+    };
 
     $scope.transposeReset = function() {
       $scope.transpose = 0;
       renderTab($scope);
-    }
+    };
 
     $scope.transposeUp = function() {
       $scope.transpose = ($scope.transpose + 1) % 12;
       renderTab($scope);
-    }
+    };
 
     $scope.transposeDown = function() {
       $scope.transpose -= 1;
@@ -265,24 +267,24 @@ asciiTabControllers.controller('tabCtrl', [
         $scope.transpose = 0;
       }
       renderTab($scope);
-    }
+    };
 
     $scope.columnsUp = function() {
       if ($scope.columns < 5) {
         $scope.columns += 1;
       }
-    }
+    };
 
     $scope.columnsDown = function() {
       if ($scope.columns > 1) {
         $scope.columns -= 1;
       }
-    }
+    };
 
     $scope.fontSizeReset = function() {
       $scope.fontSize = 100;
-      $('body').css('font-size', $scope.fontSize/100 + "em");
-    }
+      $('.tab').css('font-size', $scope.fontSize/100 + "em");
+    };
 
     $scope.fontSizeUp = function() {
       if ($scope.fontSize >= 200) {
@@ -290,8 +292,8 @@ asciiTabControllers.controller('tabCtrl', [
       }
 
       $scope.fontSize += 5;
-      $('body').css('font-size', $scope.fontSize/100 + "em");
-    }
+      $('.tab').css('font-size', $scope.fontSize/100 + "em");
+    };
 
     $scope.fontSizeDown = function() {
       if ($scope.fontSize <= 50) {
@@ -299,19 +301,63 @@ asciiTabControllers.controller('tabCtrl', [
       }
 
       $scope.fontSize -= 5;
-      $('body').css('font-size', $scope.fontSize/100 + "em");
-    }
+      $('.tab').css('font-size', $scope.fontSize/100 + "em");
+    };
 
     $scope.fontSizeString = function() {
       return ($scope.fontSize / 100).toFixed(2);
-    }
+    };
 
     $scope.openEditor = function() {
       $http.get('/tab/' + $scope.tabName + '/edit');
     };
 
+    $scope.openSearch = function() {
+      $('.search-panel').show();
+      $('.search-panel .search-box input').focus();
+    };
+
+    $scope.closeSearch = function() {
+      $('.controls').removeClass('visible');
+      $('.search-panel').hide();
+    };
+
+    $scope.openFirstSearchResult = function() {
+      var filteredTabs = filterFilter($scope.tabs, $scope.query);
+
+      if (filteredTabs.length > 0) {
+        var firstTab = filteredTabs[0];
+        $location.path('/tab/' + firstTab.name);
+        $rootScope.$apply();
+      }
+    };
+
+    $('.search-panel .search-box input')
+      .focusin(function() {
+        $scope.inputHasFocus = true;
+        $('.controls').addClass('visible');
+      })
+      .focusout(function() {
+        $scope.inputHasFocus = false;
+        $('.controls').removeClass('visible');
+      });
+
     $document.bind('keydown', function(e) {
-      console.log(e);
+      // console.log(e);
+
+      if ($scope.inputHasFocus) {
+        if (!e.metaKey && !e.altKey && !e.shiftKey && !e.ctrlKey) {
+          if (e.keyCode == 27) {
+            $scope.closeSearch();
+            e.preventDefault();
+          } else if (e.keyCode == 13) {
+            $scope.openFirstSearchResult();
+            e.preventDefault;
+          }
+        }
+
+        return;
+      }
 
       if (!e.metaKey && !e.altKey && !e.shiftKey && !e.ctrlKey) {
         if (e.keyCode >= 49 && e.keyCode <= 53) {
@@ -329,6 +375,9 @@ asciiTabControllers.controller('tabCtrl', [
         } else if (e.keyCode == 40) {
           $scope.transposeDown();
           e.preventDefault();
+        } else if (e.keyCode == 191) {
+          $scope.openSearch();
+          e.preventDefault();
         }
       }
 
@@ -339,7 +388,12 @@ asciiTabControllers.controller('tabCtrl', [
     $scope.tabName = $routeParams.tabName;
     $scope.columns = 1;
     $scope.transpose = 0;
+    $scope.inputHasFocus = false;
     $scope.fontSizeReset();
+
+    $http.get('/tab/').success(function(data) {
+      $scope.tabs = data;
+    });
 
     $http.get('/tab/' + $scope.tabName).success(function(tabData) {
       $scope.tabData = tabData;

@@ -1,28 +1,54 @@
 <div class="controls">
-  <div class="group">
-    <div class="label">Tools</div>
-    <i class="fa fa-pencil" ng-click="openEditor()" title="Edit '{{tabName}}' in default editor"></i>
-    <i class="fa fa-bookmark" ng-click="openEditor()" title="Show bookmarks"></i>
+  <div class="control-panel">
+    <div class="group">
+      <div class="label">Tools</div>
+      <i class="fa fa-pencil" ng-click="openEditor()" title="Edit"></i>
+      <i class="fa fa-search" ng-click="openSearch()" title="Search"></i>
+      <i class="fa fa-bookmark" ng-click="openEditor()" title="Bookmarks"></i>
+    </div>
+
+    <div class="group">
+      <div class="label">Transpose: {{transposeString()}}</div>
+      <i class="fa fa-arrow-circle-up" ng-click="transposeUp()"></i>
+      <i class="fa fa-arrow-circle-down" ng-click="transposeDown()"></i>
+      <i class="fa fa-history" ng-if="transpose" ng-click="transposeReset()"></i>
+    </div>
+
+    <div class="group">
+      <div class="label">Columns: {{columns}}</div>
+      <i class="fa fa-plus-circle" ng-click="columnsUp()"></i>
+      <i class="fa fa-minus-circle" ng-click="columnsDown()"></i>
+    </div>
+
+    <div class="group">
+      <div class="label">Font Size: {{fontSizeString()}}</div>
+      <i class="fa fa-plus-circle" ng-click="fontSizeUp()"></i>
+      <i class="fa fa-minus-circle" ng-click="fontSizeDown()"></i>
+    </div>
   </div>
-  <div class="group">
-    <div class="label">Transpose: {{transposeString()}}</div>
-    <i class="fa fa-arrow-circle-up" ng-click="transposeUp()"></i>
-    <i class="fa fa-arrow-circle-down" ng-click="transposeDown()"></i>
-    <i class="fa fa-history" ng-if="transpose" ng-click="transposeReset()"></i>
-  </div>
-  <div class="group">
-    <div class="label">Columns: {{columns}}</div>
-    <i class="fa fa-plus-circle" ng-click="columnsUp()"></i>
-    <i class="fa fa-minus-circle" ng-click="columnsDown()"></i>
-  </div>
-  <div class="group">
-    <div class="label">Font Size: {{fontSizeString()}}</div>
-    <i class="fa fa-plus-circle" ng-click="fontSizeUp()"></i>
-    <i class="fa fa-minus-circle" ng-click="fontSizeDown()"></i>
+
+  <div class="search-panel">
+    <div class="quit-button">
+      <i class="fa fa-close" ng-click="closeSearch()" title="Edit '{{tabName}}' in default editor"></i>
+    </div>
+
+    <div class="search-box">
+      <div>
+        <input ng-model="query" placeholder="Search for tab files" />
+      </div>
+    </div>
+
+    <div class="tab-list">
+      <ul class="tabs">
+        <li ng-repeat="tab in tabs | filter:query">
+          <a href="#/tab/{{tab.name}}">{{tab.name}}</a>
+        </li>
+      </ul>
+    </div>
   </div>
 </div>
 
-<div ng-class="'column' + columns">
+<div class="tab" ng-class="'column' + columns">
   <div class="verse" ng-repeat="verse in verses">
     <div class="line" ng-repeat="line in verse.data">
       <div class="content" ng-bind-html="renderHtml(line.data)"></div>
