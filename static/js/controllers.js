@@ -334,18 +334,16 @@ asciiTabControllers.controller('tabCtrl', [
 
     $('.search-panel .search-box input')
       .focusin(function() {
-        $scope.inputHasFocus = true;
         $('.controls').addClass('visible');
       })
       .focusout(function() {
-        $scope.inputHasFocus = false;
         $('.controls').removeClass('visible');
       });
 
     $document.bind('keydown', function(e) {
-      // console.log(e);
+      console.log(e);
 
-      if ($scope.inputHasFocus) {
+      if ($('.search-panel .search-box input').is(":focus")) {
         if (!e.metaKey && !e.altKey && !e.shiftKey && !e.ctrlKey) {
           if (e.keyCode == 27) {
             $scope.closeSearch();
@@ -388,7 +386,6 @@ asciiTabControllers.controller('tabCtrl', [
     $scope.tabName = $routeParams.tabName;
     $scope.columns = 1;
     $scope.transpose = 0;
-    $scope.inputHasFocus = false;
     $scope.fontSizeReset();
 
     $http.get('/tab/').success(function(data) {
