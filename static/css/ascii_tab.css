@@ -78,6 +78,27 @@ body {
   padding-left: 1em;
 }
 
+.bookmark-panel {
+  padding-bottom: 1em;
+  font-size: 0.8em;
+  float: right;
+  width: 40em;
+}
+
+.bookmark-panel h1 {
+  padding-left: 1em;
+}
+
+.bookmark-panel .quit-button {
+  float: right;
+  padding: 0.25em 0.5em;
+}
+
+.bookmark-panel .tab-list ul {
+  list-style: none;
+  padding-left: 1em;
+}
+
 .column1 {
   -webkit-column-count: 1;
   -moz-column-count: 1;
@@ -129,8 +150,8 @@ body {
   padding: 0 0.5em 0 0;
 }
 
-.line .gutter {
-  /*display: none;*/
+.line {
+  float: left;
 }
 
 .line .gutter {
@@ -142,24 +163,16 @@ body {
   white-space: pre;
 }
 
-.line .content {
-  float: left;
-}
-
-.line .content .data {
+.line .data {
   white-space: pre;
 }
 
-.line .content .spacer {
+.line .spacer {
   float: left;
   white-space: pre;
 }
 
-.line .content .lyric {
+.line .lyric {
   float: left;
   white-space: pre;
-}
-
-.line .content .chord {
-
 }

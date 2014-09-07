@@ -4,7 +4,8 @@
       <div class="label">Tools</div>
       <i class="fa fa-pencil" ng-click="openEditor()" title="Edit"></i>
       <i class="fa fa-search" ng-click="openSearch()" title="Search"></i>
-      <i class="fa fa-bookmark" ng-click="openEditor()" title="Bookmarks"></i>
+      <i class="fa fa-compress" ng-class="compress ? 'fa-on' : ''" ng-click="toggleCompress()" title="Search"></i>
+      <i class="fa fa-bookmark" ng-click="openBookmarks()" title="Bookmarks"></i>
     </div>
 
     <div class="group">
@@ -29,7 +30,7 @@
 
   <div class="search-panel">
     <div class="quit-button">
-      <i class="fa fa-close" ng-click="closeSearch()" title="Edit '{{tabName}}' in default editor"></i>
+      <i class="fa fa-close" ng-click="closeSearch()" title="Close"></i>
     </div>
 
     <div class="search-box">
@@ -46,12 +47,23 @@
       </ul>
     </div>
   </div>
-</div>
 
-<div class="tab" ng-class="'column' + columns">
-  <div class="verse" ng-repeat="verse in verses">
-    <div class="line" ng-repeat="line in verse.data">
-      <div class="content" ng-bind-html="renderHtml(line.data)"></div>
+  <div class="bookmark-panel">
+    <div class="quit-button">
+      <i class="fa fa-close" ng-click="closeBookmarks()" title="Close"></i>
+    </div>
+
+    <h1>Bookmarks</h1>
+
+    <div class="tab-list">
+      <ul class="tabs">
+        <li ng-repeat="bookmark in bookmarks">
+          <a href="#/tab/{{bookmark}}">{{bookmark}}</a>
+        </li>
+      </ul>
     </div>
   </div>
+</div>
+
+<div class="tab" ng-class="'column' + columns" ng-bind-html="renderHtml(html)">
 </div>

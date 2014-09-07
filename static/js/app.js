@@ -9,12 +9,14 @@ var asciiTabApp = angular.module('asciiTabApp', [
   'asciiTabControllers'
 ]);
 
-asciiTabApp.config(['$routeProvider',
-  function($routeProvider) {
+asciiTabApp.config(['$routeProvider', '$httpProvider',
+  function($routeProvider, $httpProvider) {
+    $httpProvider.defaults.cache = false;
+
     $routeProvider.
       when('/tab/', {
-        templateUrl: '/static/partials/tabs.html',
-        controller: 'tabListCtrl'
+        templateUrl: '/static/partials/tab.html',
+        controller: 'tabCtrl'
       }).
       when('/tab/:tabName', {
         templateUrl: '/static/partials/tab.html',

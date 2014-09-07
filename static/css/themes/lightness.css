@@ -11,7 +11,7 @@ a {
   border-right: thin solid #a0a0a0;
 }
 
-.line .content .chord {
+.line .chord {
   color: #0068b4;
   text-decoration: none;
 }
@@ -56,8 +56,29 @@ a {
   border-bottom-left-radius: 0.25em;
 }
 
+.bookmark-panel {
+  display: none;
+  background-color: #fafafa;
+  border-left: thin solid #a0a0a0;
+  border-bottom: thin solid #a0a0a0;
+  border-right: thin solid #a0a0a0;
+  border-bottom-left-radius: 0.5em;
+  border-bottom-right-radius: 0.5em;
+  margin-right: -1px;
+}
+
+.bookmark-panel .quit-button {
+  border-left: thin solid #a0a0a0;
+  border-bottom: thin solid #a0a0a0;
+  border-bottom-left-radius: 0.25em;
+}
+
 .fa:hover {
   color: #0068b4;
+}
+
+.fa-on {
+  color: #00408c;
 }
 
 .search-panel .search-box input {

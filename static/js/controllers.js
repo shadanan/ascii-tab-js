@@ -4,7 +4,7 @@
 
 var asciiTabControllers = angular.module('asciiTabControllers', []);
 
-var annotationPattern = /^(?:\[[a-zA-Z0-9\s]+\]|x\d+|\|)$/;
+var annotationPattern = /^(?:(?:\[|\()[a-zA-Z0-9,\s]+(?:\]|\))|[xX]\d+|\d+[xX]|\|)$/;
 
 var chords = RegExp([
   '([CDEFGAB])',
@@ -14,6 +14,7 @@ var chords = RegExp([
     'm|m7|m9|m11|m13|m6|',
     'madd9|m\\(add9\\)|m6add9|m6\\(add9\\)|m7add9|m7\\(add9\\)|',
     'mmaj7|m\\(maj7\\)|mmaj9|m\\(maj9\\)|m7b5|m7#5|',
+    '5|',
     '6|6/9|',
     '7|7sus4|7b5|7#5|7b9|7#9|7b5b9|7b5#9|7#5b9|7+5|7+9|7-5|7-9|',
     '7aug|7aug5|7dim5|7dim9|7sus2|7sus4|',
@@ -137,25 +138,31 @@ function renderToken(chord, lyric, transpose) {
     "<div>" + lyric + "</div></div>";
 }
 
-function joinChordWithVerse(chord, verse, transpose) {
+function joinChordWithVerse(chord, verse, transpose, compress) {
   var pos = 0;
   var divs = [];
 
   var curTop = "";
   var curBottom = "";
 
+  var last_token_was_spacer = false;
+
   while (pos < chord.length || pos < verse.length) {
     var curc = pos < chord.length ? chord[pos] : ' ';
     var curv = pos < verse.length ? verse[pos] : ' ';
 
     if (curc == ' ' && curv == ' ') {
-      divs.push(renderToken(curTop, curBottom, transpose));
-      divs.push(spacer);
-      curTop = "";
-      curBottom = "";
+      if (!compress || !last_token_was_spacer) {
+        divs.push(renderToken(curTop, curBottom, transpose));
+        divs.push(spacer);
+        curTop = "";
+        curBottom = "";
+        last_token_was_spacer = true;
+      }
     } else {
       curTop += curc;
       curBottom += curv;
+      last_token_was_spacer = false;
     }
 
     pos += 1;
@@ -169,74 +176,71 @@ function joinChordWithVerse(chord, verse, transpose) {
 }
 
 function renderTab($scope) {
+
+  // <div class="verse" ng-repeat="verse in verses">
+  //   <div class="line" ng-repeat="line in verse.data">
+  //     <div class="content" ng-bind-html="renderHtml(line.data)"></div>
+  //   </div>
+  // </div>
+
   var lineIndex = 1;
-  var verse_tokens = $scope.tabData.split('\n\n');
-  var verses = [];
+  var verse_tokens = $scope.tabData.replace(/\t/g, '        ').split('\n\n');
+  var html = [];
 
   for (var i = 0; i < verse_tokens.length; i++) {
     var offset = 0
 
     var line_tokens = verse_tokens[i].split('\n');
-    var lines = [];
     var j = 0;
 
+    html.push("<div class='verse'>");
     while (j < line_tokens.length) {
       if (line_tokens[j].trim() == "") {
         j += 1;
         continue;
       }
 
-      var data = null;
+      html.push("<div class='line'>");
       if (isAnnotationLine(line_tokens[j])) {
-        data = "<div class='gutter'>" + (offset + lineIndex) + "</div>" +
-               "<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose) + "</div>";
+        html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
+        html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose) + "</div>");
         j += 1;
       } else if (isChordLine(line_tokens[j]) &&
           j + 1 < line_tokens.length &&
           line_tokens[j+1].trim() != "" &&
           !isChordLine(line_tokens[j+1])) {
-        data = "<div class='gutter'>\n" + (offset + lineIndex) + "</div>" +
-               joinChordWithVerse(line_tokens[j], line_tokens[j+1], $scope.transpose);
+        html.push("<div class='gutter'>\n" + (offset + lineIndex) + "</div>");
+        html.push(joinChordWithVerse(line_tokens[j], line_tokens[j+1], $scope.transpose, $scope.compress));
         j += 2;
       } else if (isChordLine(line_tokens[j])) {
-        data = "<div class='gutter'>" + (offset + lineIndex) + "</div>" +
-               "<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose) + "</div>";
+        html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
+        html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose) + "</div>");;
         j += 1;
       } else {
-        data = "<div class='gutter'>" + (offset + lineIndex) + "</div>" +
-               "<div class='data'>" + line_tokens[j] + "</div>";
+        html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
+        html.push("<div class='data'>" + line_tokens[j] + "</div>");
         j += 1;
       }
 
-      lines.push({id: offset + lineIndex, data: data});
+      html.push("</div>");
       offset += 1;
     }
 
-    verses.push({
-      id: i,
-      data: lines
-    });
-
+    html.push("</div>");
     lineIndex += offset;
   }
 
-  $scope.lineCount = lineIndex;
-  $scope.verses = verses;
+  $scope.html = html.join('');
 }
-
-asciiTabControllers.controller('tabListCtrl', ['$scope', '$http',
-  function($scope, $http) {
-    $http.get('/tab/').success(function(data) {
-      $scope.tabs = data;
-    });
-  }
-]);
 
 asciiTabControllers.controller('tabCtrl', [
   '$rootScope', '$scope', '$document', '$http', '$routeParams', '$sce',
   '$location', 'filterFilter',
   function($rootScope, $scope, $document, $http, $routeParams, $sce,
-    $location, filterFilter) {
+      $location, filterFilter) {
+
+    $http.defaults.cache = false;
+
     $scope.renderHtml = function(html_code) {
       return $sce.trustAsHtml(html_code);
     };
@@ -309,7 +313,7 @@ asciiTabControllers.controller('tabCtrl', [
     };
 
     $scope.openEditor = function() {
-      $http.get('/tab/' + $scope.tabName + '/edit');
+      $http.post('/tab/' + $scope.tabName + '/edit');
     };
 
     $scope.openSearch = function() {
@@ -322,6 +326,14 @@ asciiTabControllers.controller('tabCtrl', [
       $('.search-panel').hide();
     };
 
+    $scope.openBookmarks = function() {
+      $('.bookmark-panel').show();
+    };
+
+    $scope.closeBookmarks = function() {
+      $('.bookmark-panel').hide();
+    };
+
     $scope.openFirstSearchResult = function() {
       var filteredTabs = filterFilter($scope.tabs, $scope.query);
 
@@ -329,8 +341,14 @@ asciiTabControllers.controller('tabCtrl', [
         var firstTab = filteredTabs[0];
         $location.path('/tab/' + firstTab.name);
         $rootScope.$apply();
+        $scope.closeSearch();
       }
     };
+
+    $scope.toggleCompress = function() {
+      $scope.compress = !$scope.compress;
+      renderTab($scope);
+    }
 
     $('.search-panel .search-box input')
       .focusin(function() {
@@ -381,20 +399,31 @@ asciiTabControllers.controller('tabCtrl', [
 
       $scope.$apply();
     });
-
-    $rootScope.title = $routeParams.tabName + ' - AsciiTabJS';
-    $scope.tabName = $routeParams.tabName;
+    
     $scope.columns = 1;
     $scope.transpose = 0;
+    $scope.compress = true;
     $scope.fontSizeReset();
 
-    $http.get('/tab/').success(function(data) {
+    $http.get('/tab').success(function(data) {
       $scope.tabs = data;
     });
 
-    $http.get('/tab/' + $scope.tabName).success(function(tabData) {
-      $scope.tabData = tabData;
-      renderTab($scope)
+    $http.get('/bookmarks').success(function(data) {
+      $scope.bookmarks = data;
     });
+
+    if ($routeParams.tabName == undefined) {
+      $rootScope.title = 'AsciiTabJS';
+      $scope.openSearch();
+    } else {
+      $rootScope.title = $routeParams.tabName + ' - AsciiTabJS';
+      $scope.tabName = $routeParams.tabName;
+
+      $http.get('/tab/' + $scope.tabName).success(function(tabData) {
+        $scope.tabData = tabData;
+        renderTab($scope)
+      });
+    }
   }
 ]);
