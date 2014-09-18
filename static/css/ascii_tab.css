@@ -1,7 +1,7 @@
 /* app css stylesheet */
 
 body {
-  padding: 0;
+  padding: 0em;
   margin: 0;
   font-family: "Menlo", monospace;
 }
@@ -175,4 +175,10 @@ body {
 .line .lyric {
   float: left;
   white-space: pre;
+}
+
+@media print {
+  .no-print, .no-print * {
+    display: none !important;
+  }
 }

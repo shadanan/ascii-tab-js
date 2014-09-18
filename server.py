@@ -7,7 +7,7 @@ import datetime
 import argparse
 import subprocess
 
-from flask import Flask, send_from_directory, request, make_response, g
+from flask import Flask, send_from_directory, make_response, g
 app = Flask(__name__)
 
 @app.before_request
