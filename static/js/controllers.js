@@ -358,11 +358,13 @@ asciiTabControllers.controller('tabCtrl', [
         $('.controls').removeClass('visible');
       });
 
+    // Remove keydown binding on scope $destroy()
     $scope.$on('$destroy', function () {
       console.log("Destroying ", $scope);
       $document.unbind('keydown');
     });
 
+    // Add keydown binding on scope create.
     $document.bind('keydown', function(e) {
       console.log(e);
 
