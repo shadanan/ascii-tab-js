@@ -255,8 +255,15 @@ asciiTabControllers.controller('tabCtrl', [
       }
     };
 
-    $scope.transposeReset = function() {
+    $scope.reset = function() {
+      $scope.columns = 1;
       $scope.transpose = 0;
+      $scope.compress = true;
+      $scope.fontSizeReset();
+    };
+
+    $scope.setTranspose = function(transpose) {
+      $scope.transpose = transpose;
       renderTab($scope);
     };
 
@@ -324,6 +331,7 @@ asciiTabControllers.controller('tabCtrl', [
     $scope.closeSearch = function() {
       $('.controls').removeClass('visible');
       $('.search-panel').hide();
+      $scope.query = "";
     };
 
     $scope.openBookmarks = function() {
@@ -371,9 +379,11 @@ asciiTabControllers.controller('tabCtrl', [
       if ($('.search-panel .search-box input').is(":focus")) {
         if (!e.metaKey && !e.altKey && !e.shiftKey && !e.ctrlKey) {
           if (e.keyCode == 27) {
+            // Close search result on escape
             $scope.closeSearch();
             e.preventDefault();
           } else if (e.keyCode == 13) {
+            // Open first search result on enter/return
             $scope.openFirstSearchResult();
             e.preventDefault;
           }
@@ -383,23 +393,46 @@ asciiTabControllers.controller('tabCtrl', [
       }
 
       if (!e.metaKey && !e.altKey && !e.shiftKey && !e.ctrlKey) {
-        if (e.keyCode >= 49 && e.keyCode <= 53) {
+        if (e.keyCode == 27) {
+          // Reset everything on escape
+          $scope.reset();
+          e.preventDefault();
+          renderTab($scope);
+        } else if (e.keyCode >= 49 && e.keyCode <= 53) {
+          // Change number of columns on number
           $scope.columns = e.keyCode - 48;
           e.preventDefault();
         } else if (e.keyCode == 187) {
+          // Increase font size on =
           $scope.fontSizeUp();
           e.preventDefault();
         } else if (e.keyCode == 189) {
+          // Decrease font size on -
           $scope.fontSizeDown();
           e.preventDefault();
         } else if (e.keyCode == 38) {
+          // Transpose up on up arrow
           $scope.transposeUp();
           e.preventDefault();
         } else if (e.keyCode == 40) {
+          // Transpose down on down arrow
           $scope.transposeDown();
           e.preventDefault();
         } else if (e.keyCode == 191) {
+          // Open search on /
           $scope.openSearch();
+          e.preventDefault();
+        }
+      } else if (!e.metaKey && e.altKey && !e.shiftKey && !e.ctrlKey) {
+        // Transpose up on option + number
+        if (e.keyCode >= 48 && e.keyCode <= 57) {
+          $scope.setTranspose(e.keyCode - 48);
+          e.preventDefault();
+        }
+      } else if (!e.metaKey && e.altKey && e.shiftKey && !e.ctrlKey) {
+        // Transpose down on option + shift + number
+        if (e.keyCode >= 48 && e.keyCode <= 57) {
+          $scope.setTranspose(48 - e.keyCode);
           e.preventDefault();
         }
       }
@@ -407,10 +440,7 @@ asciiTabControllers.controller('tabCtrl', [
       $scope.$apply();
     });
 
-    $scope.columns = 1;
-    $scope.transpose = 0;
-    $scope.compress = true;
-    $scope.fontSizeReset();
+    $scope.reset();
 
     $http.get('/tab').success(function(data) {
       $scope.tabs = data;
