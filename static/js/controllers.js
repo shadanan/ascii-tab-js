@@ -358,6 +358,11 @@ asciiTabControllers.controller('tabCtrl', [
         $('.controls').removeClass('visible');
       });
 
+    $scope.$on('$destroy', function () {
+      console.log("Destroying ", $scope);
+      $document.unbind('keydown');
+    });
+
     $document.bind('keydown', function(e) {
       console.log(e);
 
@@ -399,7 +404,7 @@ asciiTabControllers.controller('tabCtrl', [
 
       $scope.$apply();
     });
-    
+
     $scope.columns = 1;
     $scope.transpose = 0;
     $scope.compress = true;
