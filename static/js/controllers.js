@@ -230,7 +230,7 @@ function renderTab($scope) {
           line_tokens[j+1].trim() != "" &&
           !isChordLine(line_tokens[j+1])) {
         html.push("<div class='gutter'>\n" + (offset + lineIndex) + "</div>");
-        html.push(joinChordWithVerse(line_tokens[j], line_tokens[j+1], $scope.transpose, $scope.compress));
+        html.push(joinChordWithVerse(line_tokens[j], line_tokens[j+1], $scope.transpose, $scope.compressToggle));
         j += 2;
       } else if (isChordLine(line_tokens[j])) {
         html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
@@ -264,8 +264,11 @@ asciiTabControllers.controller('tabCtrl', [
     $scope.reset = function() {
       $scope.columns = 1;
       $scope.transpose = 0;
-      $scope.compress = true;
-      $scope.youtube = false;
+      $scope.compressToggle = true;
+      $scope.youtubeToggle = false;
+      $scope.bookmarksToggle = false;
+      $scope.searchToggle = false;
+      $scope.visibleLock = false;
       $scope.fontSizeReset();
     };
 
@@ -289,7 +292,7 @@ asciiTabControllers.controller('tabCtrl', [
     }
 
     $scope.toggleYouTubePlayer = function() {
-      $scope.youtube = !$scope.youtube;
+      $scope.youtubeToggle = !$scope.youtubeToggle;
     };
 
     $scope.setTranspose = function(transpose) {
@@ -353,23 +356,49 @@ asciiTabControllers.controller('tabCtrl', [
       $http.post('/tab/' + $scope.tabName + '/edit');
     };
 
+    $scope.toggleSearch = function() {
+      if ($scope.searchToggle) {
+        $scope.closeSearch();
+      } else {
+        $scope.openSearch();
+      }
+    };
+
     $scope.openSearch = function() {
-      $('.search-panel').show();
+      $scope.searchToggle = true;
+      $scope.visibleLock = true;
+      $rootScope.$apply();
       $('.search-panel .search-box input').focus();
     };
 
     $scope.closeSearch = function() {
-      $('.controls').removeClass('visible');
-      $('.search-panel').hide();
+      $scope.searchToggle = false;
+      $scope.visibleLock = false;
       $scope.query = "";
     };
 
+    $scope.lockVisible = function() {
+      $scope.visibleLock = true;
+    };
+
+    $scope.unlockVisible = function() {
+      $scope.visibleLock = false;
+    };
+
+    $scope.toggleBookmarks = function() {
+      if ($scope.bookmarksToggle) {
+        $scope.closeBookmarks();
+      } else {
+        $scope.openBookmarks();
+      }
+    };
+
     $scope.openBookmarks = function() {
-      $('.bookmark-panel').show();
+      $scope.bookmarksToggle = true;
     };
 
     $scope.closeBookmarks = function() {
-      $('.bookmark-panel').hide();
+      $scope.bookmarksToggle = false;
     };
 
     $scope.openFirstSearchResult = function() {
@@ -384,17 +413,9 @@ asciiTabControllers.controller('tabCtrl', [
     };
 
     $scope.toggleCompress = function() {
-      $scope.compress = !$scope.compress;
+      $scope.compressToggle = !$scope.compressToggle;
       renderTab($scope);
     }
-
-    $('.search-panel .search-box input')
-      .focusin(function() {
-        $('.controls').addClass('visible');
-      })
-      .focusout(function() {
-        $('.controls').removeClass('visible');
-      });
 
     // Remove keydown binding on scope $destroy()
     $scope.$on('$destroy', function () {

@@ -32,7 +32,6 @@ a {
 }
 
 .search-panel {
-  display: none;
   background-color: #fafafa;
   border-left: thin solid #a0a0a0;
   border-bottom: thin solid #a0a0a0;
@@ -57,7 +56,6 @@ a {
 }
 
 .bookmark-panel {
-  display: none;
   background-color: #fafafa;
   border-left: thin solid #a0a0a0;
   border-bottom: thin solid #a0a0a0;

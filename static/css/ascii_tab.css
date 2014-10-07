@@ -1,9 +1,13 @@
 /* app css stylesheet */
 
 body {
-  padding: 0em;
+  padding: 0;
   margin: 0;
   font-family: "Menlo", monospace;
+}
+
+ul {
+  padding: 0;
 }
 
 .fa {
@@ -92,18 +96,17 @@ body {
   width: 40em;
 }
 
-.bookmark-panel h1 {
-  padding-left: 1em;
-}
-
 .bookmark-panel .quit-button {
   float: right;
   padding: 0.25em 0.5em;
 }
 
+.bookmark-panel .content {
+  padding-left: 1em;
+}
+
 .bookmark-panel .tab-list ul {
   list-style: none;
-  padding-left: 1em;
 }
 
 .column1 {

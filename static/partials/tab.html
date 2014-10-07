@@ -1,15 +1,15 @@
-<div class="controls no-print">
+<div class="controls no-print" ng-class="controlsToggle ? 'visible': ''">
   <div class="control-panel">
     <div class="group">
       <div class="label">Tools</div>
       <div>
-        <i class="fa fa-compress" ng-class="compress ? 'fa-on' : ''" ng-click="toggleCompress()" title="Search"></i>
-        <i class="fa fa-youtube-play" ng-class="youtube ? 'fa-on' : ''" ng-if="youTubeId" ng-click="toggleYouTubePlayer()" title="YouTube"></i>
+        <i class="fa fa-compress" ng-class="compressToggle ? 'fa-on' : ''" ng-click="toggleCompress()" title="Search"></i>
+        <i class="fa fa-youtube-play" ng-class="youtubeToggle ? 'fa-on' : ''" ng-if="youTubeId" ng-click="toggleYouTubePlayer()" title="YouTube"></i>
       </div>
       <div>
         <i class="fa fa-pencil" ng-click="openEditor()" title="Edit"></i>
-        <i class="fa fa-search" ng-click="openSearch()" title="Search"></i>
-        <i class="fa fa-bookmark" ng-click="openBookmarks()" title="Bookmarks"></i>
+        <i class="fa fa-search" ng-class="searchToggle ? 'fa-on' : ''" ng-click="toggleSearch()" title="Search"></i>
+        <i class="fa fa-bookmark" ng-class="bookmarksToggle ? 'fa-on' : ''" ng-click="toggleBookmarks()" title="Bookmarks"></i>
       </div>
     </div>
 
@@ -33,18 +33,18 @@
     </div>
   </div>
 
-  <div class="youtube-panel" ng-if="youtube">
+  <div class="youtube-panel" ng-if="youtubeToggle">
     <iframe width="320" height="240" ng-src="{{youTubeEmbedUrl()}}" frameborder="0" allowfullscreen></iframe>
   </div>
 
-  <div class="search-panel">
+  <div class="search-panel" ng-show="searchToggle">
     <div class="quit-button">
       <i class="fa fa-close" ng-click="closeSearch()" title="Close"></i>
     </div>
 
     <div class="search-box">
       <div>
-        <input ng-model="query" placeholder="Search for tab files" />
+        <input ng-model="query" ng-focus="lockVisible()" ng-blur="unlockVisible()" placeholder="Search for tab files" />
       </div>
     </div>
 
@@ -57,19 +57,21 @@
     </div>
   </div>
 
-  <div class="bookmark-panel">
+  <div class="bookmark-panel" ng-show="bookmarksToggle">
     <div class="quit-button">
       <i class="fa fa-close" ng-click="closeBookmarks()" title="Close"></i>
     </div>
 
-    <h1>Bookmarks</h1>
+    <div class="content">
+      <h1>Bookmarks</h1>
 
-    <div class="tab-list">
-      <ul class="tabs">
-        <li ng-repeat="bookmark in bookmarks">
-          <a href="#/tab/{{bookmark}}">{{bookmark}}</a>
-        </li>
-      </ul>
+      <div class="tab-list">
+        <ul class="tabs">
+          <li ng-repeat="bookmark in bookmarks">
+            <a href="#/tab/{{bookmark}}">{{bookmark}}</a>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
