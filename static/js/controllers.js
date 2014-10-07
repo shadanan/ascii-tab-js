@@ -39,6 +39,16 @@ function parseChord(token) {
   return token.match(RegExp('^' + chords.source + '$'));
 }
 
+var youTubeIdPattern = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+function parseYouTubeId(line) {
+  var youTubeId = line.replace(/[\[\]\(\)]/g, '').match(youTubeIdPattern);
+  if (youTubeId && youTubeId[2].length == 11) {
+    return youTubeId[2];
+  } else {
+    return null;
+  }
+}
+
 function isAnnotationLine(line) {
   if (line.match(/^[a-zA-Z0-9,\s]+:\s/)) {
     return true;
@@ -187,6 +197,8 @@ function renderTab($scope) {
   var verse_tokens = $scope.tabData.replace(/\t/g, '        ').split('\n\n');
   var html = [];
 
+  $scope.youTubeId = null;
+
   for (var i = 0; i < verse_tokens.length; i++) {
     var offset = 0
 
@@ -200,7 +212,15 @@ function renderTab($scope) {
         continue;
       }
 
+      var youTubeId = parseYouTubeId(line_tokens[j]);
+      if (youTubeId) {
+        $scope.youTubeId = youTubeId;
+        j += 1;
+        continue;
+      }
+
       html.push("<div class='line'>");
+
       if (isAnnotationLine(line_tokens[j])) {
         html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
         html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose) + "</div>");
@@ -241,6 +261,14 @@ asciiTabControllers.controller('tabCtrl', [
 
     $http.defaults.cache = false;
 
+    $scope.reset = function() {
+      $scope.columns = 1;
+      $scope.transpose = 0;
+      $scope.compress = true;
+      $scope.youtube = false;
+      $scope.fontSizeReset();
+    };
+
     $scope.renderHtml = function(html_code) {
       return $sce.trustAsHtml(html_code);
     };
@@ -255,11 +283,13 @@ asciiTabControllers.controller('tabCtrl', [
       }
     };
 
-    $scope.reset = function() {
-      $scope.columns = 1;
-      $scope.transpose = 0;
-      $scope.compress = true;
-      $scope.fontSizeReset();
+    $scope.youTubeEmbedUrl = function() {
+      var url = "http://www.youtube.com/embed/" + $scope.youTubeId + "?rel=0&autoplay=1";
+      return $sce.trustAsResourceUrl(url);
+    }
+
+    $scope.toggleYouTubePlayer = function() {
+      $scope.youtube = !$scope.youtube;
     };
 
     $scope.setTranspose = function(transpose) {
