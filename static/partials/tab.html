@@ -4,7 +4,7 @@
       <div class="label">Tools</div>
       <div>
         <i class="fa fa-compress" ng-class="compressToggle ? 'fa-on' : ''" ng-click="toggleCompress()" title="Search"></i>
-        <i class="fa fa-youtube-play" ng-class="youtubeToggle ? 'fa-on' : ''" ng-show="youTubeId" ng-click="youtubeToggle = !youtubeToggle" title="YouTube"></i>
+        <i class="fa fa-youtube-play" ng-class="youTubeToggle ? 'fa-on' : ''" ng-show="youTubeId" ng-click="youTubeToggle = !youTubeToggle" title="YouTube"></i>
       </div>
       <div>
         <i class="fa fa-pencil" ng-click="openEditor()" title="Edit"></i>
@@ -27,14 +27,14 @@
     </div>
 
     <div class="group">
-      <div class="label">Font Size: {{fontSizeString()}}</div>
+      <div class="label">Font Size: {{ (fontSize / 100).toFixed(2) }}</div>
       <i class="fa fa-plus-circle" ng-click="fontSizeUp()"></i>
       <i class="fa fa-minus-circle" ng-click="fontSizeDown()"></i>
     </div>
   </div>
 
-  <div class="youtube-panel" ng-if="youtubeToggle">
-    <iframe width="320" height="240" ng-src="{{youTubeEmbedUrl()}}" frameborder="0" allowfullscreen></iframe>
+  <div class="youtube-panel" ng-if="youTubeToggle">
+    <iframe width="320" height="240" ng-src="{{ youTubeEmbedUrl() }}" frameborder="0" allowfullscreen></iframe>
   </div>
 
   <div class="search-panel" ng-show="searchToggle">

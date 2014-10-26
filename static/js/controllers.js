@@ -265,7 +265,7 @@ asciiTabControllers.controller('tabCtrl', [
       $scope.columns = 1;
       $scope.transpose = 0;
       $scope.compressToggle = true;
-      $scope.youtubeToggle = false;
+      $scope.youTubeToggle = false;
       $scope.bookmarksToggle = false;
       $scope.searchToggle = false;
       $scope.visibleLock = false;
@@ -331,10 +331,6 @@ asciiTabControllers.controller('tabCtrl', [
       if ($scope.fontSize > 50) {
         $scope.fontSize -= 5;
       }
-    };
-
-    $scope.fontSizeString = function() {
-      return ($scope.fontSize / 100).toFixed(2);
     };
 
     $scope.openEditor = function() {
