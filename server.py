@@ -23,8 +23,8 @@ def load_history():
 
 @app.after_request
 def save_history(response):
-    with open(app.config['HISTORY_FILE'], 'w') as fp:
-        json.dump(g.history, fp, indent=2, sort_keys=True)
+    # with open(app.config['HISTORY_FILE'], 'w') as fp:
+    #     json.dump(g.history, fp, indent=2, sort_keys=True)
     return response
 
 @app.route('/')

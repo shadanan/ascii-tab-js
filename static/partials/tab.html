@@ -4,12 +4,12 @@
       <div class="label">Tools</div>
       <div>
         <i class="fa fa-compress" ng-class="compressToggle ? 'fa-on' : ''" ng-click="toggleCompress()" title="Search"></i>
-        <i class="fa fa-youtube-play" ng-class="youtubeToggle ? 'fa-on' : ''" ng-if="youTubeId" ng-click="toggleYouTubePlayer()" title="YouTube"></i>
+        <i class="fa fa-youtube-play" ng-class="youtubeToggle ? 'fa-on' : ''" ng-show="youTubeId" ng-click="youtubeToggle = !youtubeToggle" title="YouTube"></i>
       </div>
       <div>
         <i class="fa fa-pencil" ng-click="openEditor()" title="Edit"></i>
         <i class="fa fa-search" ng-class="searchToggle ? 'fa-on' : ''" ng-click="toggleSearch()" title="Search"></i>
-        <i class="fa fa-bookmark" ng-class="bookmarksToggle ? 'fa-on' : ''" ng-click="toggleBookmarks()" title="Bookmarks"></i>
+        <i class="fa fa-bookmark" ng-class="bookmarksToggle ? 'fa-on' : ''" ng-click="bookmarksToggle = !bookmarksToggle" title="Bookmarks"></i>
       </div>
     </div>
 
@@ -44,7 +44,7 @@
 
     <div class="search-box">
       <div>
-        <input ng-model="query" ng-focus="lockVisible()" ng-blur="unlockVisible()" placeholder="Search for tab files" />
+        <input ng-model="query" ng-focus="visibleLock = true" ng-blur="visibleLock = false" focus-on="searchToggle" placeholder="Search for tab files" />
       </div>
     </div>
 
@@ -59,7 +59,7 @@
 
   <div class="bookmark-panel" ng-show="bookmarksToggle">
     <div class="quit-button">
-      <i class="fa fa-close" ng-click="closeBookmarks()" title="Close"></i>
+      <i class="fa fa-close" ng-click="bookmarksToggle = false" title="Close"></i>
     </div>
 
     <div class="content">
@@ -76,5 +76,5 @@
   </div>
 </div>
 
-<div class="tab" ng-class="'column' + columns" ng-bind-html="renderHtml(html)">
+<div class="tab" ng-class="'column' + columns" ng-style="{'font-size': fontSize/100 + 'em'}" ng-bind-html="renderHtml(html)">
 </div>

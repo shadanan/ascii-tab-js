@@ -255,9 +255,9 @@ function renderTab($scope) {
 
 asciiTabControllers.controller('tabCtrl', [
   '$rootScope', '$scope', '$document', '$http', '$routeParams', '$sce',
-  '$location', 'filterFilter',
+  '$location', 'filterFilter', 'focus',
   function($rootScope, $scope, $document, $http, $routeParams, $sce,
-      $location, filterFilter) {
+      $location, filterFilter, focus) {
 
     $http.defaults.cache = false;
 
@@ -269,7 +269,7 @@ asciiTabControllers.controller('tabCtrl', [
       $scope.bookmarksToggle = false;
       $scope.searchToggle = false;
       $scope.visibleLock = false;
-      $scope.fontSizeReset();
+      $scope.fontSize = 100;
     };
 
     $scope.renderHtml = function(html_code) {
@@ -290,10 +290,6 @@ asciiTabControllers.controller('tabCtrl', [
       var url = "http://www.youtube.com/embed/" + $scope.youTubeId + "?rel=0&autoplay=1";
       return $sce.trustAsResourceUrl(url);
     }
-
-    $scope.toggleYouTubePlayer = function() {
-      $scope.youtubeToggle = !$scope.youtubeToggle;
-    };
 
     $scope.setTranspose = function(transpose) {
       $scope.transpose = transpose;
@@ -325,27 +321,16 @@ asciiTabControllers.controller('tabCtrl', [
       }
     };
 
-    $scope.fontSizeReset = function() {
-      $scope.fontSize = 100;
-      $('.tab').css('font-size', $scope.fontSize/100 + "em");
-    };
-
     $scope.fontSizeUp = function() {
-      if ($scope.fontSize >= 200) {
-        return;
+      if ($scope.fontSize < 200) {
+        $scope.fontSize += 5;
       }
-
-      $scope.fontSize += 5;
-      $('.tab').css('font-size', $scope.fontSize/100 + "em");
     };
 
     $scope.fontSizeDown = function() {
-      if ($scope.fontSize <= 50) {
-        return;
+      if ($scope.fontSize > 50) {
+        $scope.fontSize -= 5;
       }
-
-      $scope.fontSize -= 5;
-      $('.tab').css('font-size', $scope.fontSize/100 + "em");
     };
 
     $scope.fontSizeString = function() {
@@ -367,38 +352,13 @@ asciiTabControllers.controller('tabCtrl', [
     $scope.openSearch = function() {
       $scope.searchToggle = true;
       $scope.visibleLock = true;
-      $rootScope.$apply();
-      $('.search-panel .search-box input').focus();
+      focus('searchToggle');
     };
 
     $scope.closeSearch = function() {
       $scope.searchToggle = false;
       $scope.visibleLock = false;
       $scope.query = "";
-    };
-
-    $scope.lockVisible = function() {
-      $scope.visibleLock = true;
-    };
-
-    $scope.unlockVisible = function() {
-      $scope.visibleLock = false;
-    };
-
-    $scope.toggleBookmarks = function() {
-      if ($scope.bookmarksToggle) {
-        $scope.closeBookmarks();
-      } else {
-        $scope.openBookmarks();
-      }
-    };
-
-    $scope.openBookmarks = function() {
-      $scope.bookmarksToggle = true;
-    };
-
-    $scope.closeBookmarks = function() {
-      $scope.bookmarksToggle = false;
     };
 
     $scope.openFirstSearchResult = function() {
