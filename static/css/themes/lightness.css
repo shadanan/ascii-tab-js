@@ -11,8 +11,13 @@ a {
   border-right: thin solid #a0a0a0;
 }
 
-.line .chord {
+.line .chord-primary {
   color: #0068b4;
+  text-decoration: none;
+}
+
+.line .chord-secondary {
+  color: #577842;
   text-decoration: none;
 }
 

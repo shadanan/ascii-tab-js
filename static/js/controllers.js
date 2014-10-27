@@ -115,7 +115,7 @@ function transposeChord(chord, transpose) {
   return transposedChord.join('');
 }
 
-function annotateChords(line, transpose) {
+function annotateChords(line, transpose, secondTranspose) {
   transpose = typeof transpose !== 'undefined' ? transpose : 0;
 
   var result = []
@@ -127,28 +127,34 @@ function annotateChords(line, transpose) {
 
     var parsedChord = tokens[i].match(RegExp(start.source + chords.source + end.source));
     if (parsedChord) {
-      result.push([
-          parsedChord[1],
-          "<span class='chord'>",
-          transposeChord(parsedChord.slice(2, -1), transpose),
-          "</span>",
-          parsedChord.slice(-1)
-        ].join(''));
+      var chordSpan = [];
+      chordSpan.push(parsedChord[1]);
+      chordSpan.push("<span class='chord-primary'>");
+      chordSpan.push(transposeChord(parsedChord.slice(2, -1), transpose));
+      chordSpan.push("</span>");
+      if (secondTranspose != transpose) {
+        chordSpan.push("(<span class='chord-secondary'>");
+        chordSpan.push(transposeChord(parsedChord.slice(2, -1), secondTranspose));
+        chordSpan.push("</span>)");
+      }
+      chordSpan.push(parsedChord.slice(-1));
+      result.push(chordSpan.join(''));
     } else {
       result.push(tokens[i]);
     }
   }
 
-  return result.join(' ');
+  result = result.join(' ').trimRight();
+  return result != "" ? result : " ";
 }
 
-function renderToken(chord, lyric, transpose) {
+function renderToken(chord, lyric, transpose, secondTranspose) {
   return "<div class='lyric'>" +
-    "<div>" + annotateChords(chord, transpose) + "</div>" +
-    "<div>" + lyric + "</div></div>";
+    "<div class='chord-line'>" + annotateChords(chord, transpose, secondTranspose) + "</div>" +
+    "<div class='lyric-line'>" + lyric + "</div></div>";
 }
 
-function joinChordWithVerse(chord, verse, transpose, compress) {
+function joinChordWithVerse(chord, verse, transpose, secondTranspose, compress) {
   var pos = 0;
   var divs = [];
 
@@ -163,7 +169,7 @@ function joinChordWithVerse(chord, verse, transpose, compress) {
 
     if (curc == ' ' && curv == ' ') {
       if (!compress || !last_token_was_spacer) {
-        divs.push(renderToken(curTop, curBottom, transpose));
+        divs.push(renderToken(curTop, curBottom, transpose, secondTranspose));
         divs.push(spacer);
         curTop = "";
         curBottom = "";
@@ -179,7 +185,7 @@ function joinChordWithVerse(chord, verse, transpose, compress) {
   }
 
   if (curTop != "" || curBottom != "") {
-    divs.push(renderToken(curTop, curBottom, transpose));
+    divs.push(renderToken(curTop, curBottom, transpose, secondTranspose));
   }
 
   return divs.join("");
@@ -223,18 +229,18 @@ function renderTab($scope) {
 
       if (isAnnotationLine(line_tokens[j])) {
         html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
-        html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose) + "</div>");
+        html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose, $scope.secondTranspose) + "</div>");
         j += 1;
       } else if (isChordLine(line_tokens[j]) &&
           j + 1 < line_tokens.length &&
           line_tokens[j+1].trim() != "" &&
           !isChordLine(line_tokens[j+1])) {
         html.push("<div class='gutter'>\n" + (offset + lineIndex) + "</div>");
-        html.push(joinChordWithVerse(line_tokens[j], line_tokens[j+1], $scope.transpose, $scope.compressToggle));
+        html.push(joinChordWithVerse(line_tokens[j], line_tokens[j+1], $scope.transpose, $scope.secondTranspose, $scope.compressToggle));
         j += 2;
       } else if (isChordLine(line_tokens[j])) {
         html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
-        html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose) + "</div>");;
+        html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose, $scope.secondTranspose) + "</div>");;
         j += 1;
       } else {
         html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
@@ -253,6 +259,16 @@ function renderTab($scope) {
   $scope.html = html.join('');
 }
 
+function transposeString(transpose) {
+  if (transpose == 0) {
+    return "--";
+  } else if (transpose > 0) {
+    return "+" + transpose;
+  } else {
+    return transpose.toString();
+  }
+}
+
 asciiTabControllers.controller('tabCtrl', [
   '$rootScope', '$scope', '$document', '$http', '$routeParams', '$sce',
   '$location', 'filterFilter', 'focus',
@@ -264,6 +280,7 @@ asciiTabControllers.controller('tabCtrl', [
     $scope.reset = function() {
       $scope.columns = 1;
       $scope.transpose = 0;
+      $scope.secondTranspose = 0;
       $scope.compressToggle = true;
       $scope.youTubeToggle = false;
       $scope.bookmarksToggle = false;
@@ -276,19 +293,23 @@ asciiTabControllers.controller('tabCtrl', [
       return $sce.trustAsHtml(html_code);
     };
 
-    $scope.transposeString = function() {
-      if ($scope.transpose == 0) {
-        return "--";
-      } else if ($scope.transpose > 0) {
-        return "+" + $scope.transpose;
-      } else {
-        return $scope.transpose;
-      }
-    };
-
     $scope.youTubeEmbedUrl = function() {
       var url = "http://www.youtube.com/embed/" + $scope.youTubeId + "?rel=0&autoplay=1";
       return $sce.trustAsResourceUrl(url);
+    }
+
+    $scope.transposeString = function() {
+      var result = transposeString($scope.transpose);
+      if ($scope.secondTranspose != $scope.transpose) {
+        result += "(" + transposeString($scope.secondTranspose) + ")";
+      }
+      return result;
+    };
+
+    $scope.transposeReset = function() {
+      $scope.transpose = 0;
+      $scope.secondTranspose = 0;
+      renderTab($scope);
     }
 
     $scope.setTranspose = function(transpose) {
@@ -298,14 +319,21 @@ asciiTabControllers.controller('tabCtrl', [
 
     $scope.transposeUp = function() {
       $scope.transpose = ($scope.transpose + 1) % 12;
-      renderTab($scope);
+      $scope.transposeSecondaryUp();
     };
 
     $scope.transposeDown = function() {
-      $scope.transpose -= 1;
-      if ($scope.transpose == -12) {
-        $scope.transpose = 0;
-      }
+      $scope.transpose = ($scope.transpose - 1) % -12;
+      $scope.transposeSecondaryDown();
+    };
+
+    $scope.transposeSecondaryUp = function() {
+      $scope.secondTranspose = ($scope.secondTranspose + 1) % 12;
+      renderTab($scope);
+    };
+
+    $scope.transposeSecondaryDown = function() {
+      $scope.secondTranspose = ($scope.secondTranspose - 1) % -12;
       renderTab($scope);
     };
 
@@ -428,6 +456,16 @@ asciiTabControllers.controller('tabCtrl', [
         } else if (e.keyCode == 191) {
           // Open search on /
           $scope.openSearch();
+          e.preventDefault();
+        }
+      } else if (!e.metaKey && !e.altKey && e.shiftKey && !e.ctrlKey) {
+        if (e.keyCode == 38) {
+          // Transpose secondary up on shift + up arrow
+          $scope.transposeSecondaryUp();
+          e.preventDefault();
+        } else if (e.keyCode == 40) {
+          // Transpose secondary down on shift + down arrow
+          $scope.transposeSecondaryDown();
           e.preventDefault();
         }
       } else if (!e.metaKey && e.altKey && !e.shiftKey && !e.ctrlKey) {
