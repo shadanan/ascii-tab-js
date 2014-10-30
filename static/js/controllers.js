@@ -191,74 +191,6 @@ function joinChordWithVerse(chord, verse, transpose, secondTranspose, compress) 
   return divs.join("");
 }
 
-function renderTab($scope) {
-
-  // <div class="verse" ng-repeat="verse in verses">
-  //   <div class="line" ng-repeat="line in verse.data">
-  //     <div class="content" ng-bind-html="renderHtml(line.data)"></div>
-  //   </div>
-  // </div>
-
-  var lineIndex = 1;
-  var verse_tokens = $scope.tabData.replace(/\t/g, '        ').split('\n\n');
-  var html = [];
-
-  $scope.youTubeId = null;
-
-  for (var i = 0; i < verse_tokens.length; i++) {
-    var offset = 0
-
-    var line_tokens = verse_tokens[i].split('\n');
-    var j = 0;
-
-    html.push("<div class='verse'>");
-    while (j < line_tokens.length) {
-      if (line_tokens[j].trim() == "") {
-        j += 1;
-        continue;
-      }
-
-      var youTubeId = parseYouTubeId(line_tokens[j]);
-      if (youTubeId) {
-        $scope.youTubeId = youTubeId;
-        j += 1;
-        continue;
-      }
-
-      html.push("<div class='line'>");
-
-      if (isAnnotationLine(line_tokens[j])) {
-        html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
-        html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose, $scope.secondTranspose) + "</div>");
-        j += 1;
-      } else if (isChordLine(line_tokens[j]) &&
-          j + 1 < line_tokens.length &&
-          line_tokens[j+1].trim() != "" &&
-          !isChordLine(line_tokens[j+1])) {
-        html.push("<div class='gutter'>\n" + (offset + lineIndex) + "</div>");
-        html.push(joinChordWithVerse(line_tokens[j], line_tokens[j+1], $scope.transpose, $scope.secondTranspose, $scope.compressToggle));
-        j += 2;
-      } else if (isChordLine(line_tokens[j])) {
-        html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
-        html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose, $scope.secondTranspose) + "</div>");;
-        j += 1;
-      } else {
-        html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
-        html.push("<div class='data'>" + line_tokens[j] + "</div>");
-        j += 1;
-      }
-
-      html.push("</div>");
-      offset += 1;
-    }
-
-    html.push("</div>");
-    lineIndex += offset;
-  }
-
-  $scope.html = html.join('');
-}
-
 function transposeString(transpose) {
   if (transpose == 0) {
     return "--";
@@ -280,14 +212,54 @@ asciiTabControllers.controller('tabCtrl', [
     $scope.reset = function() {
       $scope.columns = 1;
       $scope.transpose = 0;
-      $scope.secondTranspose = 0;
       $scope.compressToggle = true;
       $scope.youTubeToggle = false;
       $scope.bookmarksToggle = false;
       $scope.searchToggle = false;
       $scope.visibleLock = false;
       $scope.fontSize = 100;
+
+      if ($scope.capoPosition == undefined) {
+        $scope.secondTranspose = 0;
+      } else {
+        $scope.secondTranspose = -$scope.capoPosition;
+      }
     };
+
+    $scope.extractAnnotations = function() {
+      var verse_tokens = $scope.tabData.replace(/\t/g, '        ').split('\n\n');
+
+      for (var i = 0; i < verse_tokens.length; i++) {
+        var line_tokens = verse_tokens[i].split('\n');
+
+        for (var j = 0; j < line_tokens.length; j++) {
+          if (line_tokens[j].trim() == "") {
+            continue;
+          }
+
+          var youTubeId = parseYouTubeId(line_tokens[j]);
+          if (youTubeId) {
+            $scope.youTubeId = youTubeId;
+            continue;
+          }
+
+          var capo = line_tokens[j].match(/capo\s+(?:on)?\s*(\d{1,2})/i);
+          if (capo != null) {
+            $scope.capoPosition = Number(capo[1]);
+            continue;
+          }
+
+          if (isChordLine(line_tokens[j]) &&
+              j + 1 < line_tokens.length &&
+              line_tokens[j+1].trim() != "" &&
+              !isChordLine(line_tokens[j+1])) {
+            return;
+          }
+        }
+      }
+    };
+
+    $scope.renderTab = function() {};
 
     $scope.renderHtml = function(html_code) {
       return $sce.trustAsHtml(html_code);
@@ -309,12 +281,12 @@ asciiTabControllers.controller('tabCtrl', [
     $scope.transposeReset = function() {
       $scope.transpose = 0;
       $scope.secondTranspose = 0;
-      renderTab($scope);
+      $scope.renderTab();
     }
 
     $scope.setTranspose = function(transpose) {
       $scope.transpose = transpose;
-      renderTab($scope);
+      $scope.renderTab();
     };
 
     $scope.transposeUp = function() {
@@ -329,12 +301,12 @@ asciiTabControllers.controller('tabCtrl', [
 
     $scope.transposeSecondaryUp = function() {
       $scope.secondTranspose = ($scope.secondTranspose + 1) % 12;
-      renderTab($scope);
+      $scope.renderTab();
     };
 
     $scope.transposeSecondaryDown = function() {
       $scope.secondTranspose = ($scope.secondTranspose - 1) % -12;
-      renderTab($scope);
+      $scope.renderTab();
     };
 
     $scope.columnsUp = function() {
@@ -398,7 +370,7 @@ asciiTabControllers.controller('tabCtrl', [
 
     $scope.toggleCompress = function() {
       $scope.compressToggle = !$scope.compressToggle;
-      renderTab($scope);
+      $scope.renderTab();
     }
 
     // Remove keydown binding on scope $destroy()
@@ -432,7 +404,7 @@ asciiTabControllers.controller('tabCtrl', [
           // Reset everything on escape
           $scope.reset();
           e.preventDefault();
-          renderTab($scope);
+          $scope.renderTab();
         } else if (e.keyCode >= 49 && e.keyCode <= 53) {
           // Change number of columns on number
           $scope.columns = e.keyCode - 48;
@@ -504,7 +476,68 @@ asciiTabControllers.controller('tabCtrl', [
 
       $http.get('/tab/' + $scope.tabName).success(function(tabData) {
         $scope.tabData = tabData;
-        renderTab($scope)
+        $scope.extractAnnotations();
+        $scope.reset();
+
+        $scope.renderTab = function() {
+          var lineIndex = 1;
+          var verse_tokens = $scope.tabData.replace(/\t/g, '        ').split('\n\n');
+          var html = [];
+
+          for (var i = 0; i < verse_tokens.length; i++) {
+            var offset = 0
+
+            var line_tokens = verse_tokens[i].split('\n');
+            var j = 0;
+
+            html.push("<div class='verse'>");
+            while (j < line_tokens.length) {
+              if (line_tokens[j].trim() == "") {
+                j += 1;
+                continue;
+              }
+
+              var youTubeId = parseYouTubeId(line_tokens[j]);
+              if (youTubeId) {
+                j += 1;
+                continue;
+              }
+
+              html.push("<div class='line'>");
+
+              if (isAnnotationLine(line_tokens[j])) {
+                html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
+                html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose, $scope.secondTranspose) + "</div>");
+                j += 1;
+              } else if (isChordLine(line_tokens[j]) &&
+                  j + 1 < line_tokens.length &&
+                  line_tokens[j+1].trim() != "" &&
+                  !isChordLine(line_tokens[j+1])) {
+                html.push("<div class='gutter'>\n" + (offset + lineIndex) + "</div>");
+                html.push(joinChordWithVerse(line_tokens[j], line_tokens[j+1], $scope.transpose, $scope.secondTranspose, $scope.compressToggle));
+                j += 2;
+              } else if (isChordLine(line_tokens[j])) {
+                html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
+                html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose, $scope.secondTranspose) + "</div>");;
+                j += 1;
+              } else {
+                html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
+                html.push("<div class='data'>" + line_tokens[j] + "</div>");
+                j += 1;
+              }
+
+              html.push("</div>");
+              offset += 1;
+            }
+
+            html.push("</div>");
+            lineIndex += offset;
+          }
+
+          $scope.html = html.join('');
+        };
+
+        $scope.renderTab();
       });
     }
   }
