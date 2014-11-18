@@ -222,7 +222,7 @@ asciiTabControllers.controller('tabCtrl', [
       if ($scope.capoPosition == undefined) {
         $scope.secondTranspose = 0;
       } else {
-        $scope.secondTranspose = -$scope.capoPosition;
+        $scope.secondTranspose = $scope.capoPosition;
       }
     };
 
