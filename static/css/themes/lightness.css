@@ -5,7 +5,7 @@ a {
   text-decoration: none;
 }
 
-.line .gutter {
+.gutter {
   color: #6d6d6d;
   background-color: #fafafa;
   border-right: thin solid #a0a0a0;

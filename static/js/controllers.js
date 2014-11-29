@@ -39,6 +39,41 @@ function parseChord(token) {
   return token.match(RegExp('^' + chords.source + '$'));
 }
 
+function splitOnWhitespaceBoundary(line) {
+  if (line.length == 0) {
+    return [];
+  }
+
+  var start = 0;
+  var curr = 0;
+  var tokens = [];
+
+  var space = false;
+  if (line.charAt(0) == " ") {
+    space = true;
+  }
+
+  while (curr < line.length) {
+    if (space) {
+      if (line.charAt(curr) != " ") {
+        tokens.push(line.substring(start, curr));
+        start = curr;
+        space = false;
+      }
+    } else {
+      if (line.charAt(curr) == " ") {
+        tokens.push(line.substring(start, curr));
+        start = curr;
+        space = true;
+      }
+    }
+    curr += 1;
+  }
+
+  tokens.push(line.substring(start, line.length));
+  return tokens;
+}
+
 var youTubeIdPattern = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
 function parseYouTubeId(line) {
   var youTubeId = line.replace(/[\[\]\(\)]/g, '').match(youTubeIdPattern);
@@ -118,8 +153,8 @@ function transposeChord(chord, transpose) {
 function annotateChords(line, transpose, secondTranspose) {
   transpose = typeof transpose !== 'undefined' ? transpose : 0;
 
-  var result = []
-  var tokens = line.split(/ /);
+  var result = [];
+  var tokens = splitOnWhitespaceBoundary(line);
 
   for (var i = 0; i < tokens.length; i++) {
     var start = /^([\[\(]*)/;
@@ -148,7 +183,20 @@ function annotateChords(line, transpose, secondTranspose) {
   return result != "" ? result : " ";
 }
 
-function renderToken(chord, lyric, transpose, secondTranspose) {
+function renderLineTokens(line) {
+  var result = [];
+  var tokens = line.split(/\b/);
+
+  for (var i = 0; i < tokens.length; i++) {
+    result.push("<div class='token'>");
+    result.push(tokens[i]);
+    result.push("</div>");
+  }
+
+  return result.join("");
+}
+
+function renderChordLyricToken(chord, lyric, transpose, secondTranspose) {
   return "<div class='lyric'>" +
     "<div class='chord-line'>" + annotateChords(chord, transpose, secondTranspose) + "</div>" +
     "<div class='lyric-line'>" + lyric + "</div></div>";
@@ -169,7 +217,7 @@ function joinChordWithVerse(chord, verse, transpose, secondTranspose, compress) 
 
     if (curc == ' ' && curv == ' ') {
       if (!compress || !last_token_was_spacer) {
-        divs.push(renderToken(curTop, curBottom, transpose, secondTranspose));
+        divs.push(renderChordLyricToken(curTop, curBottom, transpose, secondTranspose));
         divs.push(spacer);
         curTop = "";
         curBottom = "";
@@ -185,7 +233,7 @@ function joinChordWithVerse(chord, verse, transpose, secondTranspose, compress) 
   }
 
   if (curTop != "" || curBottom != "") {
-    divs.push(renderToken(curTop, curBottom, transpose, secondTranspose));
+    divs.push(renderChordLyricToken(curTop, curBottom, transpose, secondTranspose));
   }
 
   return divs.join("");
@@ -227,33 +275,33 @@ asciiTabControllers.controller('tabCtrl', [
     };
 
     $scope.extractAnnotations = function() {
-      var verse_tokens = $scope.tabData.replace(/\t/g, '        ').split('\n\n');
+      $scope.verseTokens = $scope.tabData
+          .replace(/\t/g, '        ')
+          .split('\n\n')
+          .map(function(verse) {
+            return verse.split(/\n/);
+      });
 
-      for (var i = 0; i < verse_tokens.length; i++) {
-        var line_tokens = verse_tokens[i].split('\n');
+      $scope.lineCount = $scope.verseTokens.length + $scope.verseTokens
+          .map(function(verse) { return verse.length })
+          .reduce(function(x, y, i, array) { return x + y }) - 1;
 
-        for (var j = 0; j < line_tokens.length; j++) {
-          if (line_tokens[j].trim() == "") {
+      for (var i = 0; i < $scope.verseTokens.length; i++) {
+        for (var j = 0; j < $scope.verseTokens[i].length; j++) {
+          if ($scope.verseTokens[i][j].trim() == "") {
             continue;
           }
 
-          var youTubeId = parseYouTubeId(line_tokens[j]);
+          var youTubeId = parseYouTubeId($scope.verseTokens[i][j]);
           if (youTubeId) {
             $scope.youTubeId = youTubeId;
             continue;
           }
 
-          var capo = line_tokens[j].match(/capo\s+(?:on)?\s*(\d{1,2})/i);
+          var capo = $scope.verseTokens[i][j].match(/capo\s+(?:on)?\s*(\d{1,2})/i);
           if (capo != null) {
             $scope.capoPosition = Number(capo[1]);
             continue;
-          }
-
-          if (isChordLine(line_tokens[j]) &&
-              j + 1 < line_tokens.length &&
-              line_tokens[j+1].trim() != "" &&
-              !isChordLine(line_tokens[j+1])) {
-            return;
           }
         }
       }
@@ -313,12 +361,14 @@ asciiTabControllers.controller('tabCtrl', [
       if ($scope.columns < 5) {
         $scope.columns += 1;
       }
+      $scope.renderTab();
     };
 
     $scope.columnsDown = function() {
       if ($scope.columns > 1) {
         $scope.columns -= 1;
       }
+      $scope.renderTab();
     };
 
     $scope.fontSizeUp = function() {
@@ -409,6 +459,7 @@ asciiTabControllers.controller('tabCtrl', [
           // Change number of columns on number
           $scope.columns = e.keyCode - 48;
           e.preventDefault();
+          $scope.renderTab();
         } else if (e.keyCode == 187) {
           // Increase font size on =
           $scope.fontSizeUp();
@@ -480,17 +531,29 @@ asciiTabControllers.controller('tabCtrl', [
         $scope.reset();
 
         $scope.renderTab = function() {
+          var columnIndex = 1;
+          var linesInColumn = 0;
           var lineIndex = 1;
-          var verse_tokens = $scope.tabData.replace(/\t/g, '        ').split('\n\n');
           var html = [];
 
-          for (var i = 0; i < verse_tokens.length; i++) {
+          html.push("<div class='column' style='width: " + (100.0 / $scope.columns) + "%'>");
+
+          for (var i = 0; i < $scope.verseTokens.length; i++) {
             var offset = 0
 
-            var line_tokens = verse_tokens[i].split('\n');
+            var line_tokens = $scope.verseTokens[i];
             var j = 0;
 
+            if (linesInColumn > 0 && columnIndex < $scope.columns &&
+                linesInColumn + line_tokens.length > $scope.lineCount / $scope.columns) {
+              linesInColumn = 0;
+              columnIndex += 1;
+              console.log('Adding a column at ' + line_tokens[0]);
+              html.push("</div><div class='column' style='width: " + (100.0 / $scope.columns) + "%'>");
+            }
+
             html.push("<div class='verse'>");
+
             while (j < line_tokens.length) {
               if (line_tokens[j].trim() == "") {
                 j += 1;
@@ -504,36 +567,41 @@ asciiTabControllers.controller('tabCtrl', [
               }
 
               html.push("<div class='line'>");
+              html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
+              // html.push("<div class='line'>");
 
               if (isAnnotationLine(line_tokens[j])) {
-                html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
-                html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose, $scope.secondTranspose) + "</div>");
+                html.push("<div class='content annotation-line'>" + annotateChords(line_tokens[j], $scope.transpose, $scope.secondTranspose) + "</div>");
                 j += 1;
               } else if (isChordLine(line_tokens[j]) &&
                   j + 1 < line_tokens.length &&
                   line_tokens[j+1].trim() != "" &&
                   !isChordLine(line_tokens[j+1])) {
-                html.push("<div class='gutter'>\n" + (offset + lineIndex) + "</div>");
-                html.push(joinChordWithVerse(line_tokens[j], line_tokens[j+1], $scope.transpose, $scope.secondTranspose, $scope.compressToggle));
+                html.push("<div class='content lyric-line'>" + joinChordWithVerse(line_tokens[j], line_tokens[j+1], 
+                          $scope.transpose, $scope.secondTranspose, $scope.compressToggle) + "</div>");
                 j += 2;
               } else if (isChordLine(line_tokens[j])) {
-                html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
-                html.push("<div class='data'>" + annotateChords(line_tokens[j], $scope.transpose, $scope.secondTranspose) + "</div>");;
+                html.push("<div class='content chord-line'>" + annotateChords(line_tokens[j], $scope.transpose, $scope.secondTranspose) + "</div>");;
                 j += 1;
               } else {
-                html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
-                html.push("<div class='data'>" + line_tokens[j] + "</div>");
+                html.push("<div class='content text-line'>" + renderLineTokens(line_tokens[j]) + "</div>");
                 j += 1;
               }
 
+              // html.push("</div>");
               html.push("</div>");
               offset += 1;
             }
 
-            html.push("</div>");
+            html.push("</div>"); // verse
+
+            // html.push("<div class='line'><div class='gutter'> </div></div>");
+
             lineIndex += offset;
+            linesInColumn += line_tokens.length + 1;
           }
 
+          html.push("</div>"); // column
           $scope.html = html.join('');
         };
 

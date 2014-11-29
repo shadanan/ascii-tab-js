@@ -109,63 +109,17 @@ ul {
   list-style: none;
 }
 
-.column1 {
-  -webkit-column-count: 1;
-  -moz-column-count: 1;
-  column-count: 1;
-}
-
-.column2 {
-  -webkit-column-count: 2;
-  -moz-column-count: 2;
-  column-count: 2;
-}
-
-.column3 {
-  -webkit-column-count: 3;
-  -moz-column-count: 3;
-  column-count: 3;
-}
-
-.column4 {
-  -webkit-column-count: 4;
-  -moz-column-count: 4;
-  column-count: 4;
-}
-
-.column5 {
-  -webkit-column-count: 5;
-  -moz-column-count: 5;
-  column-count: 5;
+.column {
+  float: left;
 }
 
 .verse {
   clear: both;
+}
+
+.gutter {
   float: left;
-
-  -webkit-column-break-inside: avoid;
-  -moz-column-break-inside: avoid;
-  column-break-inside: avoid;
-}
-
-.line {
-  clear: both;
-}
-
-.line:last-child .gutter {
-  padding: 0 0.5em 1em 0;
-}
-
-.verse:last-child .line:last-child .gutter {
-  padding: 0 0.5em 0 0;
-}
-
-.line {
-  float: left;
-}
-
-.line .gutter {
-  float: left;
+  clear: left;
   width: 2.5em;
   padding: 0 0.5em 0 0;
   margin: 0 0.5em 0 0;
@@ -173,8 +127,31 @@ ul {
   white-space: pre;
 }
 
+.line:last-child .content {
+  padding: 0 0.5em 1em 0;
+}
+
+.verse:last-child .line:last-child .content {
+  padding: 0 0.5em 0 0;
+}
+
+.line {
+  clear: left;
+
+  display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6 */
+  display: -moz-box;         /* OLD - Firefox 19- (buggy but mostly works) */
+  display: -ms-flexbox;      /* TWEENER - IE 10 */
+  display: -webkit-flex;     /* NEW - Chrome */
+  display: flex;             /* NEW, Spec - Opera 12.1, Firefox 20+ */
+}
+
+.line .content {
+  float: left;
+  width: calc(100% - 4.5em);
+}
+
 .line .data {
-  white-space: pre;
+  float: left;
 }
 
 .line .spacer {
@@ -183,6 +160,11 @@ ul {
 }
 
 .line .lyric {
+  float: left;
+  white-space: pre;
+}
+
+.line .token {
   float: left;
   white-space: pre;
 }
