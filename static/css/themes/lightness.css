@@ -19,6 +19,10 @@ a {
   background-color: #fff0f0;
 }
 
+.line:hover .gutter {
+  background-color: #fff0f0;
+}
+
 .line .chord-primary {
   color: #0068b4;
   text-decoration: none;
