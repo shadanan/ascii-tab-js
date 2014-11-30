@@ -5,34 +5,6 @@ a {
   text-decoration: none;
 }
 
-.gutter {
-  color: #6d6d6d;
-  background-color: #fafafa;
-  border-right: thin solid #a0a0a0;
-}
-
-.verse:nth-child(even) {
-  background-color: #fafaff;
-}
-
-.line:hover {
-  background-color: #fff0f0;
-}
-
-.line:hover .gutter {
-  background-color: #fff0f0;
-}
-
-.line .chord-primary {
-  color: #0068b4;
-  text-decoration: none;
-}
-
-.line .chord-secondary {
-  color: #577842;
-  text-decoration: none;
-}
-
 .control-panel {
   border-left: thin solid #a0a0a0;
   border-bottom: thin solid #a0a0a0;
@@ -99,4 +71,32 @@ a {
 .search-panel .search-box input {
   border: thin solid #a0a0a0;
   padding: 0.5em;
+}
+
+.verse:nth-child(even) {
+  background-color: #fafaff;
+}
+
+.verse .line:hover {
+  background-color: #fff0f0;
+}
+
+.verse .line:hover .gutter {
+  background-color: #fff0f0;
+}
+
+.verse .line .gutter {
+  color: #6d6d6d;
+  background-color: #fafafa;
+  border-right: thin solid #a0a0a0;
+}
+
+.verse .line .chord-primary {
+  color: #0068b4;
+  text-decoration: none;
+}
+
+.verse .line .chord-secondary {
+  color: #577842;
+  text-decoration: none;
 }
