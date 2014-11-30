@@ -593,9 +593,11 @@ asciiTabControllers.controller('tabCtrl', [
               offset += 1;
             }
 
-            html.push("</div>"); // verse
+            if (i < $scope.verseTokens.length - 1) {
+              html.push("<div class='line'><div class='gutter'> </div></div>");
+            }
 
-            // html.push("<div class='line'><div class='gutter'> </div></div>");
+            html.push("</div>"); // verse
 
             lineIndex += offset;
             linesInColumn += line_tokens.length + 1;

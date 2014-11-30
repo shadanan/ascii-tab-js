@@ -127,14 +127,6 @@ ul {
   white-space: pre;
 }
 
-.line:last-child .content {
-  padding: 0 0.5em 1em 0;
-}
-
-.verse:last-child .line:last-child .content {
-  padding: 0 0.5em 0 0;
-}
-
 .line {
   clear: left;
 
