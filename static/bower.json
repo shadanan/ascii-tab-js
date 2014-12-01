@@ -12,6 +12,10 @@
     "angular-resource": "*",
     "angular-animate": "*",
     "font-awesome": "*",
-    "jquery": "*"
+    "jquery": "*",
+    "raphael": "*"
+  },
+  "resolutions": {
+    "angular": "1.3.4"
   }
 }

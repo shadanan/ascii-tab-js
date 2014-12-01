@@ -102,7 +102,7 @@ function isAnnotationLine(line) {
 
 function isChordLine(line) {
   var tokens = line
-                .replace(/\[[a-zA-Z0-9\s]+\]/g, '')
+                .replace(/(?:\[[a-zA-Z0-9\.\s]+\])|(?:\s\([a-zA-Z0-9\.\s]+\))/g, '')
                 .trim().split(/\s+/);
 
   for (var i = 0; i < tokens.length; i++) {
@@ -531,39 +531,29 @@ asciiTabControllers.controller('tabCtrl', [
           var tabdata = null;
           var state = DEFAULT;
 
-          // html.push("<div class='column' style='width: " + (100.0 / $scope.columns) + "%'>");
-
           var i = 0;
           while (i < $scope.lineTokens.length) {
+
+            if ($scope.lineTokens[i] == '```vextab') {
+              if (state == VERSE) {
+                html.push("</div>"); // End verse
+              }
+
+              html.push("<div class='verse'>");
+              html.push("<div class='line'>");
+              html.push("<div class='gutter'>" + lineIndex + "</div>");
+              tabdata = [];
+              state = VEXTAB;
+              i += 1;
+              continue;
+            }
+
+
             if (state == DEFAULT) {
               if ($scope.lineTokens[i].trim() == "") {
                 i += 1;
                 continue;
               }
-
-              if ($scope.lineTokens[i] == '```vextab') {
-                html.push("<div class='verse'>");
-                html.push("<div class='line'>");
-                html.push("<div class='gutter'>" + lineIndex + "</div>");
-                tabdata = [];
-                state = VEXTAB;
-                i += 1;
-                continue;
-              }
-
-              // Check if we should split columns
-              // var linesInVerse = 0;
-              // for (var j = i; j < $scope.lineTokens.length; j++) {
-              //   if ($scope.lineTokens[j].trim() == "") break;
-              //   linesInVerse += 1;
-              // }
-
-              // if (columnIndex < $scope.columns &&
-              //     i + linesInVerse / 2 > $scope.lineTokens.length * columnIndex / $scope.columns) {
-              //   columnIndex += 1;
-              //   console.log('Adding a column at ' + $scope.lineTokens[i]);
-              //   html.push("</div><div class='column' style='width: " + (100.0 / $scope.columns) + "%'>");
-              // }
 
               // Do not consume the token: use it as part of the VERSE state
               html.push("<div class='verse'>");
@@ -608,17 +598,6 @@ asciiTabControllers.controller('tabCtrl', [
                 html.push("<div class='line'><div class='gutter'> </div></div>");
                 html.push("</div>"); // End verse
                 state = DEFAULT;
-                i += 1;
-                continue;
-              }
-
-              if ($scope.lineTokens[i] == '```vextab') {
-                html.push("</div>"); // End verse
-                html.push("<div class='verse'>");
-                html.push("<div class='line'>");
-                html.push("<div class='gutter'>" + lineIndex + "</div>");
-                tabdata = [];
-                state = VEXTAB;
                 i += 1;
                 continue;
               }
