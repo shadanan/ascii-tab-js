@@ -2,6 +2,10 @@
 
 /* Controllers */
 
+var DEFAULT = 0;
+var VERSE = 1;
+var VEXTAB = 2;
+
 var asciiTabControllers = angular.module('asciiTabControllers', []);
 
 var annotationPattern = /^(?:(?:\[|\()[a-zA-Z0-9,\s]+(?:\]|\))|[xX]\d+|\d+[xX]|\|)$/;
@@ -275,34 +279,24 @@ asciiTabControllers.controller('tabCtrl', [
     };
 
     $scope.extractAnnotations = function() {
-      $scope.verseTokens = $scope.tabData
-          .replace(/\t/g, '        ')
-          .split('\n\n')
-          .map(function(verse) {
-            return verse.split(/\n/);
-      });
+      $scope.lineTokens = $scope.tabData.replace(/\t/g, '        ').split('\n');
+      $scope.lineCount = $scope.lineTokens.length;
 
-      $scope.lineCount = $scope.verseTokens.length + $scope.verseTokens
-          .map(function(verse) { return verse.length })
-          .reduce(function(x, y, i, array) { return x + y }) - 1;
+      for (var i = 0; i < $scope.lineTokens.length; i++) {
+        if ($scope.lineTokens[i].trim() == "") {
+          continue;
+        }
 
-      for (var i = 0; i < $scope.verseTokens.length; i++) {
-        for (var j = 0; j < $scope.verseTokens[i].length; j++) {
-          if ($scope.verseTokens[i][j].trim() == "") {
-            continue;
-          }
+        var youTubeId = parseYouTubeId($scope.lineTokens[i]);
+        if (youTubeId) {
+          $scope.youTubeId = youTubeId;
+          continue;
+        }
 
-          var youTubeId = parseYouTubeId($scope.verseTokens[i][j]);
-          if (youTubeId) {
-            $scope.youTubeId = youTubeId;
-            continue;
-          }
-
-          var capo = $scope.verseTokens[i][j].match(/capo\s+(?:on)?\s*(\d{1,2})/i);
-          if (capo != null) {
-            $scope.capoPosition = Number(capo[1]);
-            continue;
-          }
+        var capo = $scope.lineTokens[i].match(/capo\s+(?:on)?\s*(\d{1,2})/i);
+        if (capo != null) {
+          $scope.capoPosition = Number(capo[1]);
+          continue;
         }
       }
     };
@@ -532,78 +526,164 @@ asciiTabControllers.controller('tabCtrl', [
 
         $scope.renderTab = function() {
           var columnIndex = 1;
-          var linesInColumn = 0;
           var lineIndex = 1;
           var html = [];
+          var tabdata = null;
+          var state = DEFAULT;
 
-          html.push("<div class='column' style='width: " + (100.0 / $scope.columns) + "%'>");
+          // html.push("<div class='column' style='width: " + (100.0 / $scope.columns) + "%'>");
 
-          for (var i = 0; i < $scope.verseTokens.length; i++) {
-            var offset = 0
-
-            var line_tokens = $scope.verseTokens[i];
-            var j = 0;
-
-            if (linesInColumn > 0 && columnIndex < $scope.columns &&
-                linesInColumn + line_tokens.length > $scope.lineCount / $scope.columns) {
-              linesInColumn = 0;
-              columnIndex += 1;
-              console.log('Adding a column at ' + line_tokens[0]);
-              html.push("</div><div class='column' style='width: " + (100.0 / $scope.columns) + "%'>");
-            }
-
-            html.push("<div class='verse'>");
-
-            while (j < line_tokens.length) {
-              if (line_tokens[j].trim() == "") {
-                j += 1;
+          var i = 0;
+          while (i < $scope.lineTokens.length) {
+            if (state == DEFAULT) {
+              if ($scope.lineTokens[i].trim() == "") {
+                i += 1;
                 continue;
               }
 
-              var youTubeId = parseYouTubeId(line_tokens[j]);
+              if ($scope.lineTokens[i] == '```vextab') {
+                html.push("<div class='verse'>");
+                html.push("<div class='line'>");
+                html.push("<div class='gutter'>" + lineIndex + "</div>");
+                tabdata = [];
+                state = VEXTAB;
+                i += 1;
+                continue;
+              }
+
+              // Check if we should split columns
+              // var linesInVerse = 0;
+              // for (var j = i; j < $scope.lineTokens.length; j++) {
+              //   if ($scope.lineTokens[j].trim() == "") break;
+              //   linesInVerse += 1;
+              // }
+
+              // if (columnIndex < $scope.columns &&
+              //     i + linesInVerse / 2 > $scope.lineTokens.length * columnIndex / $scope.columns) {
+              //   columnIndex += 1;
+              //   console.log('Adding a column at ' + $scope.lineTokens[i]);
+              //   html.push("</div><div class='column' style='width: " + (100.0 / $scope.columns) + "%'>");
+              // }
+
+              // Do not consume the token: use it as part of the VERSE state
+              html.push("<div class='verse'>");
+              state = VERSE;
+              continue;
+            }
+
+            if (state == VEXTAB) {
+              if ($scope.lineTokens[i] == '```') {
+                try {
+                  // Parse VexTab music notation
+                  var expectedWidth = window.innerWidth / $scope.columns - 70;
+                  var artist = new Artist(10, 10, expectedWidth, {scale: 1.0});
+                  var vextab = new VexTab(artist);
+                  var container = document.createElement('div');
+                  var renderer = new Vex.Flow.Renderer(container, Vex.Flow.Renderer.Backends.RAPHAEL);
+
+                  vextab.parse(tabdata.join(''));
+                  artist.render(renderer);
+                  html.push(container.outerHTML);
+                } catch (e) {
+                  console.log(e);
+                  html.push(e);
+                }
+
+                html.push("</div>"); // line
+                html.push("</div>"); // verse
+                tabdata = null;
+                state = DEFAULT;
+                i += 1;
+                continue;
+              }
+
+              tabdata.push($scope.lineTokens[i] + "\n");
+              i += 1;
+              continue;
+            }
+
+            if (state == VERSE) {
+              // Split up verses
+              if ($scope.lineTokens[i].trim() == "") {
+                html.push("<div class='line'><div class='gutter'> </div></div>");
+                html.push("</div>"); // End verse
+                state = DEFAULT;
+                i += 1;
+                continue;
+              }
+
+              if ($scope.lineTokens[i] == '```vextab') {
+                html.push("</div>"); // End verse
+                html.push("<div class='verse'>");
+                html.push("<div class='line'>");
+                html.push("<div class='gutter'>" + lineIndex + "</div>");
+                tabdata = [];
+                state = VEXTAB;
+                i += 1;
+                continue;
+              }
+
+              // Do not render YouTube URL
+              var youTubeId = parseYouTubeId($scope.lineTokens[i]);
               if (youTubeId) {
-                j += 1;
+                i += 1;
                 continue;
               }
 
-              html.push("<div class='line'>");
-              html.push("<div class='gutter'>" + (offset + lineIndex) + "</div>");
-              // html.push("<div class='line'>");
-
-              if (isAnnotationLine(line_tokens[j])) {
-                html.push("<div class='content annotation-line'>" + annotateChords(line_tokens[j], $scope.transpose, $scope.secondTranspose) + "</div>");
-                j += 1;
-              } else if (isChordLine(line_tokens[j]) &&
-                  j + 1 < line_tokens.length &&
-                  line_tokens[j+1].trim() != "" &&
-                  !isChordLine(line_tokens[j+1])) {
-                html.push("<div class='content lyric-line'>" + joinChordWithVerse(line_tokens[j], line_tokens[j+1], 
-                          $scope.transpose, $scope.secondTranspose, $scope.compressToggle) + "</div>");
-                j += 2;
-              } else if (isChordLine(line_tokens[j])) {
-                html.push("<div class='content chord-line'>" + annotateChords(line_tokens[j], $scope.transpose, $scope.secondTranspose) + "</div>");;
-                j += 1;
-              } else {
-                html.push("<div class='content text-line'>" + renderLineTokens(line_tokens[j]) + "</div>");
-                j += 1;
+              if (isAnnotationLine($scope.lineTokens[i])) {
+                html.push("<div class='line'>");
+                html.push("<div class='gutter'>" + lineIndex + "</div>");
+                html.push("<div class='content annotation-line'>");
+                html.push(annotateChords($scope.lineTokens[i],
+                                         $scope.transpose, $scope.secondTranspose));
+                html.push("</div>");
+                html.push("</div>");
+                i += 1;
+                lineIndex += 1;
+                continue;
               }
 
-              // html.push("</div>");
+              if (isChordLine($scope.lineTokens[i]) &&
+                  i + 1 < $scope.lineTokens.length &&
+                  $scope.lineTokens[i+1].trim() != "" &&
+                  !isChordLine($scope.lineTokens[i+1])) {
+                html.push("<div class='line'>");
+                html.push("<div class='gutter'>\n" + lineIndex + "</div>");
+                html.push("<div class='content lyric-line'>")
+                html.push(joinChordWithVerse($scope.lineTokens[i], $scope.lineTokens[i+1], 
+                                             $scope.transpose, $scope.secondTranspose, $scope.compressToggle));
+                html.push("</div>");
+                html.push("</div>");
+                i += 2;
+                lineIndex += 1;
+                continue;
+              }
+
+              if (isChordLine($scope.lineTokens[i])) {
+                html.push("<div class='line'>");
+                html.push("<div class='gutter'>" + lineIndex + "</div>");
+                html.push("<div class='content chord-line'>");
+                html.push(annotateChords($scope.lineTokens[i], 
+                                         $scope.transpose, $scope.secondTranspose));
+                html.push("</div>");
+                html.push("</div>");
+                i += 1;
+                lineIndex += 1;
+                continue;
+              }
+              
+              html.push("<div class='line'>");
+              html.push("<div class='gutter'>" + lineIndex + "</div>");
+              html.push("<div class='content text-line'>");
+              html.push(renderLineTokens($scope.lineTokens[i]));
               html.push("</div>");
-              offset += 1;
+              html.push("</div>");
+              i += 1;
+              lineIndex += 1;
             }
-
-            if (i < $scope.verseTokens.length - 1) {
-              html.push("<div class='line'><div class='gutter'> </div></div>");
-            }
-
-            html.push("</div>"); // verse
-
-            lineIndex += offset;
-            linesInColumn += line_tokens.length + 1;
           }
 
-          html.push("</div>"); // column
+          // html.push("</div>"); // column
           $scope.html = html.join('');
         };
 
