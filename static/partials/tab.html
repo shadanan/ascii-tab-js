@@ -76,5 +76,8 @@
   </div>
 </div>
 
-<div class="tab" ng-class="'column' + columns" ng-style="{'font-size': fontSize/100 + 'em'}" ng-bind-html="renderHtml(html)">
+<div class="tab" ng-style="{'font-size': fontSize/100 + 'em',
+                            '-webkit-column-count': columns + '',
+                            '-moz-column-count': columns + '',
+                            'column-count': columns + ''}" ng-bind-html="renderHtml(html)">
 </div>
