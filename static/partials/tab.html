@@ -27,9 +27,18 @@
     </div>
 
     <div class="group">
-      <div class="label">Font Size: {{ (fontSize / 100).toFixed(2) }}</div>
+      <div class="label">Font Size: {{ scale.toFixed(2) }}</div>
       <i class="fa fa-plus-circle" ng-click="fontSizeUp()"></i>
       <i class="fa fa-minus-circle" ng-click="fontSizeDown()"></i>
+    </div>
+  </div>
+
+  <div class="chord-helper floating-panel" ng-show="chordHelperToggle">
+    <div class="quit-button">
+      <i class="fa fa-close" ng-click="chordHelperToggle = false" title="Close"></i>
+    </div>
+    
+    <div class="content">
     </div>
   </div>
 
@@ -76,7 +85,9 @@
   </div>
 </div>
 
-<div class="tab" ng-style="{'font-size': fontSize/100 + 'em',
+<div id='mytab'></div>
+
+<div class="tab" ng-style="{'font-size': scale + 'em',
                             '-webkit-column-count': columns + '',
                             '-moz-column-count': columns + '',
                             'column-count': columns + ''}" ng-bind-html="renderHtml(html)">

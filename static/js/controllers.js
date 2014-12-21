@@ -5,12 +5,13 @@
 var DEFAULT = 0;
 var VERSE = 1;
 var VEXTAB = 2;
+var ABC = 3;
 
 var asciiTabControllers = angular.module('asciiTabControllers', []);
 
 var annotationPattern = /^(?:(?:\[|\()[a-zA-Z0-9,\s]+(?:\]|\))|[xX]\d+|\d+[xX]|\|)$/;
 
-var chords = RegExp([
+var chords = new RegExp([
   '([CDEFGAB])',
   '(#|##|b|bb)?',
   '(',
@@ -39,8 +40,12 @@ var spacer = "<div class='spacer'><div> </div><div> </div></div>";
 var chordSequenceSharp = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 var chordSequenceFlat = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
+function renderGuitarChord(chord) {
+  jtab.render($('.chord-helper .content'), chord);
+}
+
 function parseChord(token) {
-  return token.match(RegExp('^' + chords.source + '$'));
+  return token.match(new RegExp('^' + chords.source + '$'));
 }
 
 function splitOnWhitespaceBoundary(line) {
@@ -164,13 +169,16 @@ function annotateChords(line, transpose, secondTranspose) {
     var start = /^([\[\(]*)/;
     var end = /([\)\],]*)$/;
 
-    var parsedChord = tokens[i].match(RegExp(start.source + chords.source + end.source));
+    var parsedChord = tokens[i].match(new RegExp(start.source + chords.source + end.source));
     if (parsedChord) {
       var chordSpan = [];
       chordSpan.push(parsedChord[1]);
-      chordSpan.push("<span class='chord-primary'>");
-      chordSpan.push(transposeChord(parsedChord.slice(2, -1), transpose));
+
+      var chordName = transposeChord(parsedChord.slice(2, -1), transpose);
+      chordSpan.push("<span class='chord-primary' onclick='renderGuitarChord(\"" + chordName + "\")'>");
+      chordSpan.push(chordName);
       chordSpan.push("</span>");
+
       if (secondTranspose != transpose) {
         chordSpan.push("(<span class='chord-secondary'>");
         chordSpan.push(transposeChord(parsedChord.slice(2, -1), secondTranspose));
@@ -183,7 +191,7 @@ function annotateChords(line, transpose, secondTranspose) {
     }
   }
 
-  result = result.join(' ').trimRight();
+  result = result.join(' ').replace(/\s+$/, '');
   return result != "" ? result : " ";
 }
 
@@ -268,8 +276,9 @@ asciiTabControllers.controller('tabCtrl', [
       $scope.youTubeToggle = false;
       $scope.bookmarksToggle = false;
       $scope.searchToggle = false;
+      $scope.chordHelperToggle = true;
       $scope.visibleLock = false;
-      $scope.fontSize = 100;
+      $scope.scale = 1;
 
       if ($scope.capoPosition == undefined) {
         $scope.secondTranspose = 0;
@@ -310,7 +319,7 @@ asciiTabControllers.controller('tabCtrl', [
     $scope.youTubeEmbedUrl = function() {
       var url = "http://www.youtube.com/embed/" + $scope.youTubeId + "?rel=0&autoplay=1";
       return $sce.trustAsResourceUrl(url);
-    }
+    };
 
     $scope.transposeString = function() {
       var result = transposeString($scope.transpose);
@@ -324,7 +333,7 @@ asciiTabControllers.controller('tabCtrl', [
       $scope.transpose = 0;
       $scope.secondTranspose = 0;
       $scope.renderTab();
-    }
+    };
 
     $scope.setTranspose = function(transpose) {
       $scope.transpose = transpose;
@@ -366,19 +375,21 @@ asciiTabControllers.controller('tabCtrl', [
     };
 
     $scope.fontSizeUp = function() {
-      if ($scope.fontSize < 200) {
-        $scope.fontSize += 5;
+      if ($scope.scale < 2) {
+        $scope.scale = Math.round($scope.scale * 100 + 5) / 100;
       }
+      $scope.renderTab();
     };
 
     $scope.fontSizeDown = function() {
-      if ($scope.fontSize > 50) {
-        $scope.fontSize -= 5;
+      if ($scope.scale > 0.5) {
+        $scope.scale = Math.round($scope.scale * 100 - 5) / 100;
       }
+      $scope.renderTab();
     };
 
     $scope.openEditor = function() {
-      $http.post('/tab/' + $scope.tabName + '/edit');
+      $http.post('/tab/' + $scope.tabName + '/edit', {});
     };
 
     $scope.toggleSearch = function() {
@@ -415,7 +426,12 @@ asciiTabControllers.controller('tabCtrl', [
     $scope.toggleCompress = function() {
       $scope.compressToggle = !$scope.compressToggle;
       $scope.renderTab();
-    }
+    };
+
+    $scope.renderGuitarChord = function (chord) {
+      $scope.chordHelperToggle = true;
+      jtab.render($('.chord-helper .content'), chord);
+    };
 
     // Remove keydown binding on scope $destroy()
     $scope.$on('$destroy', function () {
@@ -436,7 +452,7 @@ asciiTabControllers.controller('tabCtrl', [
           } else if (e.keyCode == 13) {
             // Open first search result on enter/return
             $scope.openFirstSearchResult();
-            e.preventDefault;
+            e.preventDefault();
           }
         }
 
@@ -525,10 +541,14 @@ asciiTabControllers.controller('tabCtrl', [
         $scope.reset();
 
         $scope.renderTab = function() {
-          var columnIndex = 1;
+          $scope.parsedData = {};
+          $scope.parsedData.verses = [];
+          var currentVerse = null;
+          var currentLine = null;
+
           var lineIndex = 1;
           var html = [];
-          var tabdata = null;
+          var inlineCode = null;
           var state = DEFAULT;
 
           var i = 0;
@@ -539,11 +559,41 @@ asciiTabControllers.controller('tabCtrl', [
                 html.push("</div>"); // End verse
               }
 
+              currentVerse = {};
+              $scope.parsedData.verses.push(currentVerse);
+              currentVerse.type = 'vextab';
+              currentVerse.lines = [];
+              currentLine = {};
+              currentVerse.lines.push(currentLine);
+              currentLine.gutter = lineIndex;
+
               html.push("<div class='verse'>");
               html.push("<div class='line'>");
               html.push("<div class='gutter'>" + lineIndex + "</div>");
-              tabdata = [];
+              inlineCode = [];
               state = VEXTAB;
+              i += 1;
+              continue;
+            }
+
+            if ($scope.lineTokens[i] === '```abcjs') {
+              if (state == VERSE) {
+                html.push("</div>"); // End verse
+              }
+
+              currentVerse = {};
+              $scope.parsedData.verses.push(currentVerse);
+              currentVerse.type = 'abcjs';
+              currentVerse.lines = [];
+              currentLine = {};
+              currentVerse.lines.push(currentLine);
+              currentLine.gutter = lineIndex;
+
+              html.push("<div class='verse'>");
+              html.push("<div class='line'>");
+              html.push("<div class='gutter'>" + lineIndex + "</div>");
+              inlineCode = [];
+              state = ABC;
               i += 1;
               continue;
             }
@@ -556,6 +606,11 @@ asciiTabControllers.controller('tabCtrl', [
               }
 
               // Do not consume the token: use it as part of the VERSE state
+              currentVerse = {};
+              $scope.parsedData.verses.push(currentVerse);
+              currentVerse.type = 'verse';
+              currentVerse.lines = [];
+
               html.push("<div class='verse'>");
               state = VERSE;
               continue;
@@ -566,28 +621,68 @@ asciiTabControllers.controller('tabCtrl', [
                 try {
                   // Parse VexTab music notation
                   var expectedWidth = window.innerWidth / $scope.columns - 70;
-                  var artist = new Artist(10, 10, expectedWidth, {scale: 1.0});
+                  var artist = new Artist(10, 10, expectedWidth, {scale: $scope.scale});
                   var vextab = new VexTab(artist);
-                  var container = document.createElement('div');
-                  var renderer = new Vex.Flow.Renderer(container, Vex.Flow.Renderer.Backends.RAPHAEL);
+                  var vextabContainer = document.createElement('div');
+                  var renderer = new Vex.Flow.Renderer(vextabContainer,
+                      Vex.Flow.Renderer.Backends.RAPHAEL);
 
-                  vextab.parse(tabdata.join(''));
+                  vextab.parse(inlineCode.join(''));
                   artist.render(renderer);
-                  html.push(container.outerHTML);
+                  html.push(vextabContainer.outerHTML);
+
+                  currentLine.data = inlineCode.join('');
+                  currentLine.html = vextabContainer.outerHTML;
                 } catch (e) {
                   console.log(e);
                   html.push(e);
                 }
 
+                currentLine = null;
+                currentVerse = null;
+
                 html.push("</div>"); // line
                 html.push("</div>"); // verse
-                tabdata = null;
+                inlineCode = null;
                 state = DEFAULT;
                 i += 1;
                 continue;
               }
 
-              tabdata.push($scope.lineTokens[i] + "\n");
+              inlineCode.push($scope.lineTokens[i] + "\n");
+              i += 1;
+              continue;
+            }
+
+            if (state == ABC) {
+              if ($scope.lineTokens[i] == '```') {
+                try {
+                  // Parse AbcJs music notation
+                  var abcContainer = document.createElement('div');
+                  ABCJS.renderAbc(abcContainer, inlineCode.join(''), {}, {
+                    'staffwidth': (window.innerWidth / $scope.columns) / $scope.scale - 70,
+                    'scale': $scope.scale, 'paddingright': 1, 'paddingleft': 1});
+                  html.push(abcContainer.outerHTML);
+
+                  currentLine.data = inlineCode.join('');
+                  currentLine.html = abcContainer.outerHTML;
+                } catch (e) {
+                  console.log(e);
+                  html.push(e);
+                }
+
+                currentLine = null;
+                currentVerse = null;
+
+                html.push("</div>"); // line
+                html.push("</div>"); // verse
+                inlineCode = null;
+                state = DEFAULT;
+                i += 1;
+                continue;
+              }
+
+              inlineCode.push($scope.lineTokens[i] + "\n");
               i += 1;
               continue;
             }
@@ -596,6 +691,9 @@ asciiTabControllers.controller('tabCtrl', [
               // Split up verses
               if ($scope.lineTokens[i].trim() == "") {
                 html.push("<div class='line'><div class='gutter'> </div></div>");
+
+                currentVerse = null;
+
                 html.push("</div>"); // End verse
                 state = DEFAULT;
                 i += 1;
@@ -610,6 +708,13 @@ asciiTabControllers.controller('tabCtrl', [
               }
 
               if (isAnnotationLine($scope.lineTokens[i])) {
+                currentLine = {};
+                currentVerse.lines.push(currentLine);
+                currentLine.gutter = lineIndex;
+                currentLine.type = 'annotation-line';
+                currentLine.html = annotateChords($scope.lineTokens[i],
+                                                  $scope.transpose, $scope.secondTranspose);
+
                 html.push("<div class='line'>");
                 html.push("<div class='gutter'>" + lineIndex + "</div>");
                 html.push("<div class='content annotation-line'>");
@@ -626,9 +731,16 @@ asciiTabControllers.controller('tabCtrl', [
                   i + 1 < $scope.lineTokens.length &&
                   $scope.lineTokens[i+1].trim() != "" &&
                   !isChordLine($scope.lineTokens[i+1])) {
+                currentLine = {};
+                currentVerse.lines.push(currentLine);
+                currentLine.gutter = lineIndex;
+                currentLine.type = 'lyric-line';
+                currentLine.html = joinChordWithVerse($scope.lineTokens[i], $scope.lineTokens[i+1], 
+                                                      $scope.transpose, $scope.secondTranspose, $scope.compressToggle);
+
                 html.push("<div class='line'>");
                 html.push("<div class='gutter'>\n" + lineIndex + "</div>");
-                html.push("<div class='content lyric-line'>")
+                html.push("<div class='content lyric-line'>");
                 html.push(joinChordWithVerse($scope.lineTokens[i], $scope.lineTokens[i+1], 
                                              $scope.transpose, $scope.secondTranspose, $scope.compressToggle));
                 html.push("</div>");
@@ -639,6 +751,13 @@ asciiTabControllers.controller('tabCtrl', [
               }
 
               if (isChordLine($scope.lineTokens[i])) {
+                currentLine = {};
+                currentVerse.lines.push(currentLine);
+                currentLine.gutter = lineIndex;
+                currentLine.type = 'chord-line';
+                currentLine.html = annotateChords($scope.lineTokens[i], 
+                                                  $scope.transpose, $scope.secondTranspose);
+
                 html.push("<div class='line'>");
                 html.push("<div class='gutter'>" + lineIndex + "</div>");
                 html.push("<div class='content chord-line'>");
@@ -651,6 +770,12 @@ asciiTabControllers.controller('tabCtrl', [
                 continue;
               }
               
+              currentLine = {};
+              currentVerse.lines.push(currentLine);
+              currentLine.gutter = lineIndex;
+              currentLine.type = 'text-line';
+              currentLine.html = renderLineTokens($scope.lineTokens[i]);
+
               html.push("<div class='line'>");
               html.push("<div class='gutter'>" + lineIndex + "</div>");
               html.push("<div class='content text-line'>");
@@ -664,6 +789,8 @@ asciiTabControllers.controller('tabCtrl', [
 
           // html.push("</div>"); // column
           $scope.html = html.join('');
+
+          console.log($scope.parsedData);
         };
 
         $scope.renderTab();

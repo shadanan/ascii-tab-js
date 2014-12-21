@@ -60,6 +60,22 @@ a {
   border-bottom-left-radius: 0.25em;
 }
 
+.floating-panel {
+  background-color: #fafafa;
+  border-left: thin solid #a0a0a0;
+  border-bottom: thin solid #a0a0a0;
+  border-right: thin solid #a0a0a0;
+  border-bottom-left-radius: 0.5em;
+  border-bottom-right-radius: 0.5em;
+  margin-right: -1px;
+}
+
+.floating-panel .quit-button {
+  border-left: thin solid #a0a0a0;
+  border-bottom: thin solid #a0a0a0;
+  border-bottom-left-radius: 0.25em;
+}
+
 .fa:hover {
   color: #0068b4;
 }

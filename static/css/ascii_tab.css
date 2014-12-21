@@ -110,6 +110,19 @@ ul {
   list-style: none;
 }
 
+.floating-panel {
+  float: right;
+}
+
+.floating-panel .quit-button {
+  float: right;
+  padding: 0.25em 0.5em;
+}
+
+.chord-helper .content {
+  float: left;
+}
+
 .column {
   float: left;
 }
@@ -142,6 +155,7 @@ div {
   float: left;
   clear: left;
   width: 2.5em;
+  min-width: 2.5em;
   padding: 0 0.5em 0 0;
   margin: 0 0.5em 0 0;
   text-align: right;
