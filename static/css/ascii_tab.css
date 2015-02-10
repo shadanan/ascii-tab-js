@@ -141,6 +141,7 @@ div {
   column-break-inside: avoid;
 }
 
+/* .line groups .gutter and .content */
 .verse .line {
   clear: left;
 
@@ -151,6 +152,7 @@ div {
   display: flex;             /* NEW, Spec - Opera 12.1, Firefox 20+ */
 }
 
+/* .gutter contains line numbers */
 .verse .line .gutter {
   float: left;
   clear: left;
@@ -162,10 +164,30 @@ div {
   white-space: pre;
 }
 
+/* .content contains everything next to the gutter */
 .verse .line .content {
   float: left;
   width: calc(100% - 4.5em);
 }
+
+/* .segment are pieces to be strung together in the content */
+.verse .line .content .segment {
+    float: left;
+}
+
+.verse .line .content .segment .lineseg .element {
+    float: left;
+}
+
+.verse .line .content .segment .lineseg .element .token {
+    white-space: pre;
+}
+
+.verse .line .content .segment .lineseg .element .chord div {
+    float: left;
+}
+
+/* TODO: Remove 'float: left' after converting everything to segments */
 
 .verse .line .data {
   float: left;
@@ -177,11 +199,6 @@ div {
 }
 
 .verse .line .lyric {
-  float: left;
-  white-space: pre;
-}
-
-.verse .line .token {
   float: left;
   white-space: pre;
 }
